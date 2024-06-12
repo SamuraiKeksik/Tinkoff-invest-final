@@ -1,4 +1,5 @@
-﻿using Google.Protobuf.WellKnownTypes;
+﻿using Google.Protobuf.Collections;
+using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,6 +18,7 @@ namespace Tinkoff_bot
     {
         //Объявление и создание переменной клиента
         InvestApiClient client;
+        int defaultQuantity = 3;
         public MyBot(string token) => client = InvestApiClientFactory.Create(token);
 
         public async Task CreateAccount(string accountName)
@@ -41,6 +43,12 @@ namespace Tinkoff_bot
             var response = await client.Sandbox.GetSandboxAccountsAsync(request);
             List<Account> accounts = response.Accounts.ToList();
             return accounts;
+        }
+
+        public async Task<string> GetDefaultAccountId()
+        {
+            var accounts = await GetAccounts();
+            return accounts.First().Id;
         }
 
         public async Task PayIn(string accountId, string money)
@@ -76,6 +84,12 @@ namespace Tinkoff_bot
             var response = await client.Sandbox.GetSandboxPortfolioAsync(request);
             return response;
         }
+        public async Task<List<PositionsSecurities>> GetPositions(string accountId)
+        {//Метод возвращает портфель счета с id = accountId
+            var request = new PositionsRequest { AccountId = accountId };
+            var response = await client.Sandbox.GetSandboxPositionsAsync(request);
+            return response.Securities.ToList();
+        }
 
         public async Task PostBuyOrder(string accountId, string instrumentId, int quantity)
         {//Метод закупает акцию с instrumentId на счете с accountId, с количеством quantity
@@ -90,6 +104,18 @@ namespace Tinkoff_bot
             await client.Sandbox.PostSandboxOrderAsync(request);
         }
 
+       /* public async Task<double> GetCurrentPrice(List<string> instrumentIdList)
+        {
+            RepeatedField<string> repeatedField = new RepeatedField<string>();
+            foreach (var instrumentId in instrumentIdList)
+            {
+                repeatedField.Add(instrumentId);
+            }
+            var request = new GetLastPricesRequest
+            {
+                InstrumentId = repeatedField
+            };
+        }*/
         public async Task<List<Share>> GetSharesList()
         {
             //возвращает список акций на бирже
@@ -111,33 +137,74 @@ namespace Tinkoff_bot
             var response = await client.MarketData.GetCandlesAsync(request);
             return response.Candles.ToList();
         }
-        public async Task GetEma(int candlesCount, string figi)
+        public async Task<double> GetEma(int candlesCount, string figi)
         {         
             //Свечи будут браться за промежуток с (сейчас - день) по (сейчас)
-            var from = DateTime.UtcNow.AddDays(-1);
+            //candlesCount - кол-во используемых свечей для рассчета ЕМА
+            var from = DateTime.UtcNow.AddDays(-2);
             var to = DateTime.UtcNow;
             var candlesList = await GetCandlesList(figi, from, to);
 
             int n = candlesCount; //длина
             double k = (double) 2 / (n + 1); //вес
             double ema = 0; //текущее ема
-            
 
-            double previousEma = Convert.ToDouble(candlesList[candlesList.Count - n].Close);
-            double closePrice = Convert.ToDouble(candlesList[candlesList.Count - n].Close); 
+            var currentCandle = candlesList[candlesList.Count - n];
+            double previousEma = Convert.ToDouble(currentCandle.Close);
+            double closePrice = Convert.ToDouble(currentCandle.Close);
+            string closeDateTime = currentCandle.Time.ToString();
+
             for (int i = n - 1; i > 0; i--)
             {
-                await Console.Out.WriteLineAsync("ema - " + previousEma.ToString() + ". Close - " + closePrice);
-                closePrice = (Convert.ToDouble(candlesList[candlesList.Count - i].Close));
+                currentCandle = candlesList[candlesList.Count - i];
+                closeDateTime = currentCandle.Time.ToString();
+                closePrice = (Convert.ToDouble(currentCandle.Close));
                 ema = (closePrice * k) + (previousEma * (1 - k));
                 previousEma = ema;
             }
-            await Console.Out.WriteLineAsync("Итоговое ЕМА - " + ema.ToString());
-            //цена закрытия свечи  
-             //предыдущее ема
+            return ema;
             
+        }
 
-            
+        public async Task PostOrder(string instrumentId, OrderDirection direction, int quantity)
+        {
+            var defaultAccount = await GetDefaultAccountId();
+            var request = new PostOrderRequest 
+            { 
+                InstrumentId = instrumentId,
+                Direction = direction,
+                Quantity = quantity,
+                AccountId = defaultAccount,
+                OrderType = OrderType.Bestprice
+            };
+            var response = await client.Sandbox.PostSandboxOrderAsync(request);
+        }
+        public async Task startTrading(List<string> figis)
+        {
+            foreach (var figi in figis)
+            {
+                var currentPositions = await GetPositions(await GetDefaultAccountId());
+                var longEma = await GetEma(34, figi); //длинная ЕМА
+                var shortEma = await GetEma(30, figi); //короткая ЕМА
+                Console.WriteLine("LongEma - " + longEma + ", ShortEma - " + shortEma);
+                if (longEma > shortEma) //Если цена длинной ЕМА больше короткой - то продаем 
+                {
+                    if(currentPositions.Any(x => x.Figi == figi))
+                    {
+                        await PostOrder(figi, OrderDirection.Sell, defaultQuantity); //Если акции есть на счете то мы продаем
+                        Console.WriteLine("ПРОДАНО!");
+                    }
+                }
+                else if(shortEma > longEma) ////Если цена длинной ЕМА меньше короткой - то покупаем
+                {
+                    if (!currentPositions.Any(x => x.Figi == figi)) //Если акции есть на счете то мы НЕ покупаем
+                    {
+                        await PostOrder(figi, OrderDirection.Buy, defaultQuantity);
+                        Console.WriteLine( "КУПЛЕНО!");
+                    }
+                }
+            }
+           
         }
     }
 }
