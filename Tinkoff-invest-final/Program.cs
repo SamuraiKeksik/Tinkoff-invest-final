@@ -33,10 +33,16 @@ namespace Tinkoff_bot
             
             List<SharesStock> sharesStocksList = new List<SharesStock>();
             sharesStocksList.Add(new SharesStock("BBG00475KHX6", 3));
+            sharesStocksList.Add(new SharesStock("RU000A106T36", 1));
+            
+
+
+
             while (true)
             {
                 var accounts = await myBot.accountsHandler.GetAccounts();
                 var portfolio = await myBot.portfolioHandler.GetPortfolio(accounts[0].Id);
+                Console.WriteLine("Портфолио:");
                 foreach (var position in portfolio.Positions)
                 {
                     await Console.Out.WriteLineAsync($"{position.Figi} - {position.CurrentPrice} - {position.Quantity}");

@@ -39,6 +39,20 @@ namespace Tinkoff_invest_final
             return response.Candles.ToList();
         }
 
+        public async Task GetSharesTxtFile()
+        {
+            var sharesList = await GetSharesList();
+            using (StreamWriter writer = new StreamWriter("shares.txt", false))
+            {
+                foreach (var share in sharesList)
+                {
+                    writer.WriteLine(share.Ticker + " - " + share.Figi);
+                }
+            }
+        }
+            
+
+
         public async Task<double> GetEma(int candlesCount, string figi) //Рассчет EMA
         {
             //Свечи будут браться за промежуток с (сейчас - день) по (сейчас)
