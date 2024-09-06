@@ -10,7 +10,7 @@ using Tinkoff_bot;
 
 namespace Tinkoff_invest_final
 {
-    public class SharesHandler
+    internal class SharesHandler
     {
         InvestApiClient client;
         MyBot bot;
@@ -26,12 +26,6 @@ namespace Tinkoff_invest_final
             var response = await client.Instruments.SharesAsync(request);
             return response.Instruments.ToList();
         }
-        public async Task<List<Future>> GetFuturesList()   //возвращает список ВСЕХ фьючерсов на бирже
-        {
-            var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
-            var response = await client.Instruments.FuturesAsync(request);
-            return response.Instruments.ToList();
-        }
         public async Task<List<HistoricCandle>> GetCandlesList(string figi, DateTime from, DateTime to) //Возвращает список свечей по figi с момента from по to
         {            
             var request = new GetCandlesRequest()
@@ -39,7 +33,7 @@ namespace Tinkoff_invest_final
                 InstrumentId = figi,
                 From = from.ToTimestamp(),
                 To = to.ToTimestamp(),
-                Interval = CandleInterval.Hour
+                Interval = CandleInterval._30Min
             };
             var response = await client.MarketData.GetCandlesAsync(request);
             return response.Candles.ToList();
@@ -56,20 +50,10 @@ namespace Tinkoff_invest_final
                 }
             }
         }
-        public async Task GetFuturesTxtFile()
-        {
-            var futuresList = await GetFuturesList();
-            using (StreamWriter writer = new StreamWriter("futures.txt", false))
-            {
-                foreach (var future in futuresList)
-                {
-                    writer.WriteLine(future.Ticker + " - " + future.Figi);
-                }
-            }
-        }
+            
 
 
-        public async Task<double> GetEma(int candlesCount, string figi, HistoricCandleEnum historicCandleEnum = HistoricCandleEnum.Close) //Рассчет EMA
+        public async Task<double> GetEma(int candlesCount, string figi) //Рассчет EMA
         {
             //Свечи будут браться за промежуток с (сейчас - день) по (сейчас)
             //candlesCount - кол-во используемых свечей для рассчета ЕМА
@@ -80,48 +64,23 @@ namespace Tinkoff_invest_final
             int n = candlesCount; //длина
             double k = (double)2 / (n + 1); //вес
             double ema = 0; //текущее ема
+
             var currentCandle = candlesList[candlesList.Count - n];
-
-            double previousEma = Convert.ToDouble(historicCandleEnum switch
-            {
-                HistoricCandleEnum.Close => currentCandle.Close,
-                HistoricCandleEnum.Open => currentCandle.Open,
-                HistoricCandleEnum.Max => currentCandle.High,
-                HistoricCandleEnum.Min => currentCandle.Low,
-                _ => throw new NotImplementedException()
-            });            
-            double price = Convert.ToDouble(historicCandleEnum switch
-            {
-                HistoricCandleEnum.Close => currentCandle.Close,
-                HistoricCandleEnum.Open => currentCandle.Open,
-                HistoricCandleEnum.Max => currentCandle.High,
-                HistoricCandleEnum.Min => currentCandle.Low,
-                _ => throw new NotImplementedException()
-            });
-
+            double previousEma = Convert.ToDouble(currentCandle.Close);
+            double closePrice = Convert.ToDouble(currentCandle.Close);
             string closeDateTime = currentCandle.Time.ToString();
 
             for (int i = n - 1; i > 0; i--)
             {
                 currentCandle = candlesList[candlesList.Count - i];
                 closeDateTime = currentCandle.Time.ToString();
-                price = Convert.ToDouble(historicCandleEnum switch
-                {
-                    HistoricCandleEnum.Close => currentCandle.Close,
-                    HistoricCandleEnum.Open => currentCandle.Open,
-                    HistoricCandleEnum.Max => currentCandle.High,
-                    HistoricCandleEnum.Min => currentCandle.Low,
-                    _ => throw new NotImplementedException()
-                });
-                ema = (price * k) + (previousEma * (1 - k));
+                closePrice = (Convert.ToDouble(currentCandle.Close));
+                ema = (closePrice * k) + (previousEma * (1 - k));
                 previousEma = ema;
             }
             return ema;
 
         }
-
-
-       
         /* public async Task<double> GetCurrentPrice(List<string> instrumentIdList)
         {
             RepeatedField<string> repeatedField = new RepeatedField<string>();

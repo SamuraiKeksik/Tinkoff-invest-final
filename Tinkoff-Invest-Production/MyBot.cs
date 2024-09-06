@@ -15,7 +15,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Tinkoff_bot
 {
-    public class MyBot
+    internal class MyBot
     {
         //Объявление и создание переменной клиента
         public AccountsHandler accountsHandler;
@@ -36,22 +36,22 @@ namespace Tinkoff_bot
             foreach (var shareStock in sharesStocksList)
             {
                 var currentPositions = await portfolioHandler.GetPositions(await accountsHandler.GetDefaultAccountId());
-                var longEma = await sharesHandler.GetEma(34, shareStock.InstrumentId); //длинная ЕМА
-                var shortEma = await sharesHandler.GetEma(30, shareStock.InstrumentId); //короткая ЕМА
+                var longEma = await sharesHandler.GetEma(34, shareStock.instrumentId); //длинная ЕМА
+                var shortEma = await sharesHandler.GetEma(30, shareStock.instrumentId); //короткая ЕМА
                 Console.WriteLine("LongEma - " + longEma + ", ShortEma - " + shortEma);
                 if (longEma > shortEma) //Если цена длинной ЕМА больше короткой - то продаем 
                 {
-                    if(currentPositions.Any(x => x.Figi == shareStock.InstrumentId))
+                    if(currentPositions.Any(x => x.Figi == shareStock.instrumentId))
                     {
-                        await ordersHandler.PostOrder(shareStock.InstrumentId, OrderDirection.Sell, shareStock.SharesCount); //Если акции есть на счете то мы продаем
+                        await ordersHandler.PostOrder(shareStock.instrumentId, OrderDirection.Sell, shareStock.sharesCount); //Если акции есть на счете то мы продаем
                         Console.WriteLine("ПРОДАНО!");
                     }
                 }
                 else if(shortEma > longEma) ////Если цена длинной ЕМА меньше короткой - то покупаем
                 {
-                    if (!currentPositions.Any(x => x.Figi == shareStock.InstrumentId)) //Если акции есть на счете то мы НЕ покупаем
+                    if (!currentPositions.Any(x => x.Figi == shareStock.instrumentId)) //Если акции есть на счете то мы НЕ покупаем
                     {
-                        await ordersHandler.PostOrder(shareStock.InstrumentId, OrderDirection.Buy, shareStock.SharesCount);
+                        await ordersHandler.PostOrder(shareStock.instrumentId, OrderDirection.Buy, shareStock.sharesCount);
                         Console.WriteLine( "КУПЛЕНО!");
                     }
                 }

@@ -15,7 +15,7 @@ namespace Tinkoff_bot
         static async Task Main(string[] args)
         {
             // Настройте маркер авторизации
-            string accessToken = "t.yvyfcnjEEMp_In7Coo3ycworDxnNN5uvjG4pBzP6dOlTVxwYYkHD79HlFP-6pu9CvbGKJoxqIFqdb7Mp34NYYQ";
+            string accessToken = "t.sD6NucZaHS9z10KVuLpBdFtxBfBCDDg4eEWl7KLp6O2ILXK1Y_RIqIDq4M1YhJrvJOvv0MfasVIPeUkIS4WdmA";
             var myBot = new MyBot(accessToken);
 
             /* /
@@ -31,15 +31,14 @@ namespace Tinkoff_bot
             // await myBot.PostBuyOrder(defaultAccount, "BBG00475KHX6", 3);
 
             
-            List<SharesStock> sharesStocksList = new List<SharesStock>();
-            sharesStocksList.Add(new SharesStock("BBG00475KHX6", 3, Tinkoff_invest_final.InstrumentType.Share, ""));
-            sharesStocksList.Add(new SharesStock("RU000A106T36", 1, Tinkoff_invest_final.InstrumentType.Share, ""));
+           /* List<SharesStock> sharesStocksList = new List<SharesStock>();
+            sharesStocksList.Add(new SharesStock("BBG00475KHX6", 3));
+            sharesStocksList.Add(new SharesStock("RU000A106T36", 1));*/
+
+            await myBot.ordersHandler.PostOrder("BBG00RPRPX12", OrderDirection.Sell, 1);
 
 
-            await myBot.sharesHandler.GetSharesTxtFile();
-
-
-          /*  while (true)
+            while (true)
             {
                 var accounts = await myBot.accountsHandler.GetAccounts();
                 var portfolio = await myBot.portfolioHandler.GetPortfolio(accounts[0].Id);
@@ -49,9 +48,9 @@ namespace Tinkoff_bot
                     await Console.Out.WriteLineAsync($"{position.Figi} - {position.CurrentPrice} - {position.Quantity}");
                 }
                 
-                await myBot.startTrading(sharesStocksList);
+               // await myBot.startTrading(sharesStocksList);
                 Thread.Sleep(6000);
-            }*/
+            }
 
         }
     }

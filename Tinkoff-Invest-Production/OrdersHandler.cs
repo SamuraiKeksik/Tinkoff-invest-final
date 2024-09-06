@@ -9,7 +9,7 @@ using Tinkoff_bot;
 
 namespace Tinkoff_invest_final
 {
-    public class OrdersHandler
+    internal class OrdersHandler
     {
         InvestApiClient client;
         MyBot bot;
@@ -43,7 +43,7 @@ namespace Tinkoff_invest_final
                 AccountId = defaultAccount,
                 OrderType = OrderType.Bestprice
             };
-            var response = await client.Sandbox.PostSandboxOrderAsync(request);
+            var response = await client.Orders.PostOrderAsync(request);
         }
     }
 }

@@ -9,7 +9,7 @@ using Tinkoff_bot;
 
 namespace Tinkoff_invest_final
 {
-    public class PortfolioHandler
+    internal class PortfolioHandler
     {
         InvestApiClient client;
         MyBot bot;
@@ -34,7 +34,7 @@ namespace Tinkoff_invest_final
         public async Task<PortfolioResponse> GetPortfolio(string accountId) //Метод возвращает портфель счета с id = accountId
         {
             var request = new PortfolioRequest { AccountId = accountId };
-            var response = await client.Sandbox.GetSandboxPortfolioAsync(request);
+            var response = await client.Operations.GetPortfolioAsync(request);
             return response;
         }
         public async Task<List<PositionsSecurities>> GetPositions(string accountId) //Метод возвращает портфель счета с id = accountId

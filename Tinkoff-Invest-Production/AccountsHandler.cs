@@ -9,7 +9,7 @@ using Tinkoff_bot;
 
 namespace Tinkoff_invest_final
 {
-    public class AccountsHandler
+    internal class AccountsHandler
     {
         InvestApiClient client;
         MyBot bot;
@@ -37,7 +37,7 @@ namespace Tinkoff_invest_final
         public async Task<List<Account>> GetAccounts() //Метод возвращает List открытых счетов
         { 
             var request = new GetAccountsRequest();
-            var response = await client.Sandbox.GetSandboxAccountsAsync(request);
+            var response = await client.Users.GetAccountsAsync(request);
             List<Account> accounts = response.Accounts.ToList();
             return accounts;
         }

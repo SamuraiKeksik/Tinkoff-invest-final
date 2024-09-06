@@ -6,14 +6,25 @@ using System.Threading.Tasks;
 
 namespace Tinkoff_invest_final
 {
-    internal class SharesStock
+    public class SharesStock
     {
-        public SharesStock(string instrumentId, int sharesCount) 
+        public SharesStock(string instrumentId, int sharesCount, InstrumentType instrumentType, string ticker) 
         {
-            this.instrumentId = instrumentId;
-            this.sharesCount = sharesCount;            
+            InstrumentId = instrumentId;
+            SharesCount = sharesCount;  
+            InstrumentType = instrumentType;
+            Ticker = ticker;
+            
         }
-        public string instrumentId { get; set; }
-        public int sharesCount { get; set; }
+        public string InstrumentId { get; set; }
+        public int SharesCount { get; set; }
+        public InstrumentType InstrumentType { get; set; }
+        public string Ticker { get; set; }
+    }
+
+    public enum InstrumentType
+    {
+        Share,
+        Future
     }
 }
