@@ -54,7 +54,7 @@ namespace Tinkoff_invest_final
             }
             else
             {
-                return false;   //продать
+                return false; //продать
             }
 
             /* var currentPositions = await portfolioHandler.GetPositions(await accountsHandler.GetDefaultAccountId());

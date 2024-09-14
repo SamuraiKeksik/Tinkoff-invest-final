@@ -280,5 +280,134 @@ namespace TinkoffInvestLibSandbox
             return response.Candles.ToList();
         }
 
+        /// <summary>
+        /// Метод рассчитывает EMA (экспоненциальные скользящие средние) по введенному списку цен и длине
+        /// </summary>
+        /// <param name="prices">Список цен</param>
+        /// <param name="length">количество временных отрезков, за который считается средняя </param>
+        /// <returns></returns>
+        private decimal CalculateEma(List<decimal> prices, int length)
+        {
+            int n = length; //длина
+            decimal k = (decimal)2 / (n + 1); //вес
+            decimal ema = 0; //текущее ема
+            var currentCandleCost = prices[prices.Count - n];
+
+            decimal previousEma = currentCandleCost;
+            decimal price = currentCandleCost;
+
+            for (int i = n - 1; i > 0; i--)
+            {
+                currentCandleCost = prices[prices.Count - i];
+                price = currentCandleCost;
+                ema = (price * k) + (previousEma * (1 - k));
+                previousEma = ema;
+            }
+            return ema;
+        }
+
+        /// <summary>
+        /// Метод рассчитывает стоит ли продавать или покупать инструмент по индикаторам
+        /// </summary>
+        /// <param name="candles">Список свечей</param>
+        /// <param name="length">Начальная длина</param>
+        /// <param name="length2">Конечная длина</param>
+        /// <returns>true если купить и false если продать</returns>
+        private bool CalculateHeikinAshi(List<HistoricCandle> candles, int length, int length2)
+        {
+            List<decimal> candlesOpenCosts = new List<decimal>();
+            List<decimal> candlesCloseCosts = new List<decimal>();
+            List<decimal> candlesHighCosts = new List<decimal>();
+            List<decimal> candlesLowCosts = new List<decimal>();
+            foreach (var item in candles)
+            {
+                candlesOpenCosts.Add(Convert.ToDecimal(item.Open));
+                candlesCloseCosts.Add(Convert.ToDecimal(item.Close));
+                candlesHighCosts.Add(Convert.ToDecimal(item.High));
+                candlesLowCosts.Add(Convert.ToDecimal(item.Low));
+            }
+            var o = CalculateEma(candlesCloseCosts, length); //open - массив цен открытия
+            var c = CalculateEma(candlesOpenCosts, length); //open - массив цен закрытия
+            var h = CalculateEma(candlesHighCosts, length);
+            var l = CalculateEma(candlesLowCosts, length);
+
+            List<decimal> haOpen = new List<decimal>();
+            List<decimal> haClose = new List<decimal>();
+            List<decimal> haHigh = new List<decimal>();
+            List<decimal> haLow = new List<decimal>();
+            for (int i = 0; i < length; i++)
+            {
+                haClose.Add((o + h + l + c) / 4);
+                if (haOpen.Count < 1) haOpen.Add((o + c) / 2);
+                else haOpen.Add((haOpen[i - 1] + haClose[i]) / 2);
+
+                haHigh.Add(decimal.Max(h, decimal.Max(haOpen[i], haClose[i])));
+                haLow.Add(decimal.Min(l, decimal.Min(haOpen[i], haClose[i])));
+            }
+
+            var o2 = CalculateEma(haOpen, length2); //рассчитывается ЕМА по списку цен открытия
+            var c2 = CalculateEma(haClose, length2);
+            var h2 = CalculateEma(haHigh, length2);
+            var l2 = CalculateEma(haLow, length2);
+
+            return o2 > c2 ? false : true; // false - продать, true - купить
+
+            /*var haData = new List<CandleData>();
+            for (int i = 0; i < data.Count; i++)
+            {
+                
+                var o = CalculateEMA(data, len, i, "Open");
+                var c = CalculateEMA(data, len, i, "Close");
+                var h = CalculateEMA(data, len, i, "High");
+                var l = CalculateEMA(data, len, i, "Low");
+
+                var haclose = (o + h + l + c) / 4;
+                var haopen = i > 0 ? (haData[i - 1].Open + haData[i - 1].Close) / 2 : (o + c) / 2;
+                var hahigh = Math.Max(h, Math.Max(haopen, haclose));
+                var halow = Math.Min(l, Math.Min(haopen, haclose));
+                haData = new List<CandleData>(data);
+
+                var o2 = CalculateEMA(haData, len2, i, "Open");
+                var c2 = CalculateEMA(haData, len2, i, "Close");
+                var h2 = CalculateEMA(haData, len2, i, "High");
+                var l2 = CalculateEMA(haData, len2, i, "Low");
+
+                haData.Add(new CandleData
+                {
+                    Open = o2,
+                    High = h2,
+                    Low = l2,
+                    Close = c2,
+                });
+            }
+            candleData = haData;
+        }
+
+        private double CalculateEMA(List<CandleData> data, int len, int i, string field)
+        {
+            double sum = 0;
+            for (int j = 0; j < len; j++)
+            {
+                switch (field)
+                {
+                    case "Open":
+                        sum += data[j].Open;
+                        break;
+                    case "Close":
+                        sum += data[j].Close;
+                        break;
+                    case "High":
+                        sum += data[j].High;
+                        break;
+                    case "Low":
+                        sum += data[j].Low;
+                        break;
+                }
+            }
+            return sum / len;
+        }*/
+        }
+
+
     }
 }
