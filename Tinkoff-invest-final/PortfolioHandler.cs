@@ -37,6 +37,13 @@ namespace Tinkoff_invest_final
             var response = await client.Sandbox.GetSandboxPortfolioAsync(request);
             return response;
         }
+
+        public async Task<PortfolioResponse> GetRealPortfolio(string accountId) //Метод возвращает портфель счета с id = accountId
+        {
+            var request = new PortfolioRequest { AccountId = accountId };
+            var response = await client.Operations.GetPortfolioAsync(request);
+            return response;
+        }
         public async Task<List<PositionsSecurities>> GetPositions(string accountId) //Метод возвращает портфель счета с id = accountId
         {
             var request = new PositionsRequest { AccountId = accountId };

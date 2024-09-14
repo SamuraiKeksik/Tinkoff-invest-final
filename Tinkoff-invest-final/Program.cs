@@ -15,8 +15,10 @@ namespace Tinkoff_bot
         static async Task Main(string[] args)
         {
             // Настройте маркер авторизации
-            string accessToken = "t.yvyfcnjEEMp_In7Coo3ycworDxnNN5uvjG4pBzP6dOlTVxwYYkHD79HlFP-6pu9CvbGKJoxqIFqdb7Mp34NYYQ";
+            string accessToken = "t.HncJqZM1jb2FFJ0DWzWYrcUoc-6KdqLzyUWRCQfIWx3FAAUtV4ju0qX8X10n6sStLkEfsYU3Vc4fR5OG5fghGw";
             var myBot = new MyBot(accessToken);
+
+            await myBot.accountsHandler.CreateAccount("egor");
 
             /* /
 
@@ -27,17 +29,17 @@ namespace Tinkoff_bot
 
             // await myBot.GetEma(4, "BBG0029SG1C1");
             // await myBot.GetEma(10, "BBG0029SG1C1");
-            var defaultAccount = await myBot.accountsHandler.GetDefaultAccountId();
+           // var defaultAccount = await myBot.accountsHandler.GetDefaultAccountId();
             // await myBot.PostBuyOrder(defaultAccount, "BBG00475KHX6", 3);
 
-            
+           /*
             List<SharesStock> sharesStocksList = new List<SharesStock>();
             sharesStocksList.Add(new SharesStock("BBG00475KHX6", 3, Tinkoff_invest_final.InstrumentType.Share, ""));
             sharesStocksList.Add(new SharesStock("RU000A106T36", 1, Tinkoff_invest_final.InstrumentType.Share, ""));
 
 
             await myBot.sharesHandler.GetSharesTxtFile();
-
+           */
 
           /*  while (true)
             {

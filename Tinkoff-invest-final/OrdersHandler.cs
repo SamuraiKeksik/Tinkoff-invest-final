@@ -29,7 +29,19 @@ namespace Tinkoff_invest_final
                 Quantity = quantity,
                 OrderType = OrderType.Bestprice
             };
-            await client.Sandbox.PostSandboxOrderAsync(request);
+            await client.Orders.PostOrderAsync(request);
+        }
+        public async Task PostSellOrder(string accountId, string instrumentId, int quantity) //Метод закупает акцию с instrumentId на счете с accountId, с количеством quantity
+        {
+            var request = new PostOrderRequest
+            {
+                AccountId = accountId,
+                Direction = OrderDirection.Sell,
+                InstrumentId = instrumentId,
+                Quantity = quantity,
+                OrderType = OrderType.Bestprice
+            };
+            await client.Orders.PostOrderAsync(request);
         }
 
         public async Task PostOrder(string instrumentId, OrderDirection direction, int quantity) //Метод закупает акцию с instrumentId на счете с accountId, с количеством quantity

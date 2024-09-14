@@ -41,10 +41,22 @@ namespace Tinkoff_invest_final
             List<Account> accounts = response.Accounts.ToList();
             return accounts;
         }
+        public async Task<List<Account>> GetRealAccounts() //Метод возвращает List открытых счетов
+        { 
+            var request = new GetAccountsRequest();
+            var response = await client.Users.GetAccountsAsync(request);
+            List<Account> accounts = response.Accounts.ToList();
+            return accounts;
+        }
 
         public async Task<string> GetDefaultAccountId() //Метод возвращает первый счет из всех
         {
             var accounts = await GetAccounts();
+            return accounts.First().Id;
+        }
+        public async Task<string> GetRealDefaultAccountId() //Метод возвращает первый счет из всех
+        {
+            var accounts = await GetRealAccounts();
             return accounts.First().Id;
         }
     }
