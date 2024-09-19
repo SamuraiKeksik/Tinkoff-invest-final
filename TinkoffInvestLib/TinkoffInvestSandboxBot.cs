@@ -1,5 +1,7 @@
-﻿using Google.Protobuf.WellKnownTypes;
+﻿using Google.Protobuf.Collections;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using Tinkoff.InvestApi;
 using Tinkoff.InvestApi.V1;
@@ -82,7 +84,7 @@ namespace TinkoffInvestLibSandbox
         public async Task<string> GetSandboxAccountInfoAsync(Account account)
         {
             if (account == null) { return "Переданного счета не существует!"; } 
-            string result = $"Информация по счету {account.Name} с id {account.Id} на {DateTime.Today} - {DateTime.Now}:\n";    //Создание строки ответа
+            string result = $"Информация по счету {account.Name} на {DateTime.Now}:\n";    //Создание строки ответа
 
             var ordersRequest = new GetOrdersRequest() { AccountId = account.Id};     //Обрабатывает активные заявки (торговые поручения)
             var ordersResponse = await Client.Sandbox.GetSandboxOrdersAsync(ordersRequest);
@@ -162,6 +164,72 @@ namespace TinkoffInvestLibSandbox
         }
 
         /// <summary>
+        /// Метод возвращает список позиций портфеля
+        /// </summary>
+        /// <param name="account">Счет для сбора позиций портфеля</param>
+        /// <returns>Список позиций портфеля</returns>
+        public async Task<List<PortfolioPosition>> GetPortfolioInstrumentsAsync(Account account)
+        {
+            var portfolioRequest = new PortfolioRequest() { AccountId = account.Id };  //Обрабатывает портфель счета
+            var portfolioResponse = await Client.Sandbox.GetSandboxPortfolioAsync(portfolioRequest);
+           return portfolioResponse.Positions.ToList();
+        }
+
+         /// <summary>
+        /// Метод возвращает количество лотов инструмента в портфеле
+        /// </summary>
+        /// <param name="account">Счет для поулчения количества лотов</param>
+        /// <param name="ticker">Тикер инструмента</param>
+        /// <returns>Количество лотов инструмента в портфеле</returns>
+        public async Task<int> GetLotsOfInstrumentAsync(Account account, string ticker)
+        {
+            string instrumentId;
+            if (Shares.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+            {
+                instrumentId = Shares.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+            }
+            else if (Futures.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+            {
+                instrumentId = Futures.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+            }
+            else throw new Exception("Тикер не найден"!);
+
+            var positions = await GetPortfolioInstrumentsAsync(account);
+            foreach (var position in positions)
+            {
+                if (position.InstrumentUid == instrumentId)
+                {
+                    return Convert.ToInt32(position.QuantityLots.Units);
+                }
+            }
+            return 0; //Если инструмент не найден в портфеле то возвращаем 0
+        }
+
+        /// <summary>
+        /// Возвращает последнюю цену закрытия
+        /// </summary>
+        /// <param name="ticker">Тикер инструмента</param>
+        /// <returns>Цена закрытия инструмента</returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<decimal> GetCurrentPriceOfInstrumentAsync(string ticker)
+        {
+            string instrumentId;
+            if (Shares.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+            {
+                instrumentId = Shares.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+            }
+            else if (Futures.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+            {
+                instrumentId = Futures.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+            }
+            else throw new Exception("Тикер не найден"!);
+            
+            var request = new GetClosePricesRequest() { Instruments = { new InstrumentClosePriceRequest() { InstrumentId = instrumentId } } };
+            var response = await Client.MarketData.GetClosePricesAsync(request);
+            return response.ClosePrices.First().Price;
+        }
+
+        /// <summary>
         /// Метод создает счет в песочнице
         /// </summary>
         /// <param name="accountName">Название счета</param>
@@ -219,7 +287,7 @@ namespace TinkoffInvestLibSandbox
         /// <param name="quantity">Количество лотов инструмента</param>
         /// <param name="direction">Покупка или продажа</param>
         /// <returns>true в случае успешного выставления заявки, иначе false</returns>
-        private async Task<bool> PlaceOrderAsync(Account account, string ticker, int quantity, OrderDirection direction)
+        public async Task<bool> PlaceOrderAsync(Account account, string ticker, int quantity, OrderDirection direction)
         {
             try
             {
@@ -244,6 +312,10 @@ namespace TinkoffInvestLibSandbox
             }
             catch (RpcException e)
             {
+                using (StreamWriter writer = new StreamWriter("BotErrors.txt", true))
+                {
+                    await writer.WriteLineAsync(e.ToString());
+                }
                 return false;
             }
         }
@@ -252,12 +324,30 @@ namespace TinkoffInvestLibSandbox
         /// Возвращает список свечей по инструменту
         /// </summary>
         /// <param name="ticker">Тикер инструмента</param>
-        /// <param name="from">Начальная дата</param>
-        /// <param name="to">Конечная дата</param>
         /// <param name="interval">Интервал свечей</param>
         /// <returns>Список свечей или null если тикер инструмента неправильный</returns>
-        public async Task<List<HistoricCandle>> GetSandboxCandlesList(string ticker, DateTime from, DateTime to, CandleInterval interval) //Возвращает список свечей по figi с момента from по to
+        public async Task<List<HistoricCandle>> GetSandboxCandlesListAsync(string ticker, CandleInterval interval) //Возвращает список свечей по figi с момента from по to
         {
+            DateTime from = interval switch
+            {
+                CandleInterval.Unspecified => DateTime.UtcNow.AddDays(-1),
+                CandleInterval._1Min => DateTime.UtcNow.AddDays(-1),
+                CandleInterval._2Min => DateTime.UtcNow.AddDays(-1),
+                CandleInterval._3Min => DateTime.UtcNow.AddDays(-1),
+                CandleInterval._5Min => DateTime.UtcNow.AddDays(-1),
+                CandleInterval._10Min => DateTime.UtcNow.AddDays(-1),
+                CandleInterval._15Min => DateTime.UtcNow.AddDays(-1),
+                CandleInterval._30Min => DateTime.UtcNow.AddDays(-2),
+                CandleInterval.Hour => DateTime.UtcNow.AddDays(-7),
+                CandleInterval._2Hour => DateTime.UtcNow.AddDays(-30),
+                CandleInterval._4Hour => DateTime.UtcNow.AddDays(-30),
+                CandleInterval.Day => DateTime.UtcNow.AddDays(-365),
+                CandleInterval.Week => DateTime.UtcNow.AddDays(-730),
+                CandleInterval.Month => DateTime.UtcNow.AddDays(-3650),
+                _ => DateTime.UtcNow.AddDays(-1)
+
+            };
+            DateTime to = DateTime.UtcNow;
             string instrumentId = string.Empty;
             if (Shares.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
             {
@@ -313,7 +403,7 @@ namespace TinkoffInvestLibSandbox
         /// <param name="length">Начальная длина</param>
         /// <param name="length2">Конечная длина</param>
         /// <returns>true если купить и false если продать</returns>
-        private bool CalculateHeikinAshi(List<HistoricCandle> candles, int length, int length2)
+        public bool CalculateHeikinAshi(List<HistoricCandle> candles, int length, int length2)
         {
             List<decimal> candlesOpenCosts = new List<decimal>();
             List<decimal> candlesCloseCosts = new List<decimal>();

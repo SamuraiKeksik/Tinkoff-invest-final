@@ -9,7 +9,7 @@ using Telegram.Bot.Polling;
 
 namespace Tinkoff_telegramm
 {
-    static internal class MyTelegramBot
+    static public class MyTelegramBot
     {
         static public ITelegramBotClient bot { get; } = new TelegramBotClient("7186897785:AAEs29OV9dtQO1tSqARk0XDSvWPKXlXE1B4");
         static public ChatId MyChatId { get; set; } = new ChatId(5293935408);
@@ -30,9 +30,13 @@ namespace Tinkoff_telegramm
             }
         }
 
-        public static async Task SendMessage(string message)
+        public static async Task SendJaroslavMessage(string message)
         {
             await bot.SendTextMessageAsync(JaroslavChatId, message);
+        }
+        public static async Task SendMeMessage(string message)
+        {
+            await bot.SendTextMessageAsync(MyChatId, message);
         }
 
         public static async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -41,9 +45,27 @@ namespace Tinkoff_telegramm
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(exception));
         }
 
-        public static void StartTelegramBot()
+        public static void StartJaroslavTelegramBot()
         {
             Console.WriteLine("Запущен бот " + bot.GetMeAsync().Result.FirstName);
+
+            var cts = new CancellationTokenSource();
+            var cancellationToken = cts.Token;
+            var receiverOptions = new ReceiverOptions
+            {
+                AllowedUpdates = { }, // receive all update types
+            };
+            bot.StartReceiving(
+                HandleUpdateAsync,
+                HandleErrorAsync,
+                receiverOptions,
+                cancellationToken
+            );
+        }
+        
+        public static void StartMyTelegramBot()
+        {
+            Console.WriteLine("Запущен телеграмм бот " + bot.GetMeAsync().Result.FirstName);
 
             var cts = new CancellationTokenSource();
             var cancellationToken = cts.Token;

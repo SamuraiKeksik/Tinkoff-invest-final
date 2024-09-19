@@ -11,12 +11,12 @@ class Program
     {        
 
         
-        //await MyTelegramBot.SendMessage("Бот включен!");
+        //await MyTelegramBot.SendMeMessage("Бот включен!");
         
-        string accessToken = "t.oeyKCsszoPthNJn7OqvpufztgWf3Xyll2MhgAYVM0yptSneENO0U0aTuQaQisrkGwysEa7m_lsLQKCldEaApaw";
+        string accessToken = "t.HncJqZM1jb2FFJ0DWzWYrcUoc-6KdqLzyUWRCQfIWx3FAAUtV4ju0qX8X10n6sStLkEfsYU3Vc4fR5OG5fghGw";
         var myBot = new MyBot(accessToken);
         var tradingStrategies = new TradingStrategies(accessToken);
-        var accountId = await myBot.accountsHandler.GetRealDefaultAccountId();
+        //var accountId = await myBot.accountsHandler.GetRealDefaultAccountId();
         
         List<SharesStock> sharesStocksList = new List<SharesStock>();
         sharesStocksList.Add(new SharesStock("TCS00A106YF0", 1, InstrumentType.Share, "VK"));   //VK
@@ -36,54 +36,58 @@ class Program
         sharesStocksList2.Add(new SharesStock("FUTMXI092400", 1, InstrumentType.Future, "MMU4")); //MMU4
 
         while (true)
-        {           
-            if (DateTime.Now < DateTime.Today.AddHours(10) || DateTime.Now > DateTime.Today.AddHours(20))
+        {
+            try
             {
-                Console.WriteLine("Бот заснул на 60 минут и пропустил исполнение");
+                if (DateTime.Now < DateTime.Today.AddHours(10) || DateTime.Now > DateTime.Today.AddHours(20))
+                {
+                    Console.WriteLine("Бот заснул на 60 минут и пропустил исполнение");
+                    //await myBot.startTrading(sharesStocksList);
+                    Thread.Sleep(60 *   // minutes to sleep
+                     60 *   // seconds to a minute
+                     1000); // milliseconds to a second
+                    continue;
+                }
+
+                foreach (var share in sharesStocksList)
+                {
+                    if (await tradingStrategies.SmoothedHeikenAshiCandles(share, 10, 10))
+                    {
+                        await MyTelegramBot.SendJaroslavMessage($"{share.Ticker} - Нужно купить");
+                    }
+                    else
+                    {
+                        await MyTelegramBot.SendJaroslavMessage($"{share.Ticker} - Нужно Продать");
+                    }
+                }
+
+                /* foreach (var share in sharesStocksList2)
+                 {
+                     if (await tradingStrategies.SmoothedHeikenAshiCandles(share, 10,10))
+                     {
+                         var portfolio = await myBot.portfolioHandler.GetRealPortfolio(accountId);
+                         if (!portfolio.Positions.Any(p => p.InstrumentUid == share.InstrumentId))
+                             await myBot.ordersHandler.PostBuyOrder(accountId, share.InstrumentId, 1);
+                         else if (portfolio.Positions.First(p => p.InstrumentUid == share.InstrumentId).Quantity < 0)
+                             await myBot.ordersHandler.PostBuyOrder(accountId, share.InstrumentId, 2);
+                     }
+                     else
+                     {
+                         var portfolio = await myBot.portfolioHandler.GetRealPortfolio(accountId);
+                         if (portfolio.Positions.First(p => p.InstrumentUid == share.InstrumentId).Quantity > 0)
+                             await myBot.ordersHandler.PostSellOrder(accountId, share.InstrumentId, 2);
+                         else if (!portfolio.Positions.Any(p => p.InstrumentUid == share.InstrumentId))
+                             await myBot.ordersHandler.PostSellOrder(accountId, share.InstrumentId, 1);
+                     }
+                 }*/
+
+                Console.WriteLine("Бот заснул на 60 минут");
                 //await myBot.startTrading(sharesStocksList);
                 Thread.Sleep(60 *   // minutes to sleep
                  60 *   // seconds to a minute
                  1000); // milliseconds to a second
-                continue;
             }
-
-            foreach (var share in sharesStocksList)
-            {
-                if (await tradingStrategies.SmoothedHeikenAshiCandles(share, 10,10))
-                {
-                    await MyTelegramBot.SendMessage($"{share.Ticker} - Нужно купить");
-                }
-                else
-                {
-                    await MyTelegramBot.SendMessage($"{share.Ticker} - Нужно Продать");
-                }
-            }
-
-           /* foreach (var share in sharesStocksList2)
-            {
-                if (await tradingStrategies.SmoothedHeikenAshiCandles(share, 10,10))
-                {
-                    var portfolio = await myBot.portfolioHandler.GetRealPortfolio(accountId);
-                    if (!portfolio.Positions.Any(p => p.InstrumentUid == share.InstrumentId))
-                        await myBot.ordersHandler.PostBuyOrder(accountId, share.InstrumentId, 1);
-                    else if (portfolio.Positions.First(p => p.InstrumentUid == share.InstrumentId).Quantity < 0)
-                        await myBot.ordersHandler.PostBuyOrder(accountId, share.InstrumentId, 2);
-                }
-                else
-                {
-                    var portfolio = await myBot.portfolioHandler.GetRealPortfolio(accountId);
-                    if (portfolio.Positions.First(p => p.InstrumentUid == share.InstrumentId).Quantity > 0)
-                        await myBot.ordersHandler.PostSellOrder(accountId, share.InstrumentId, 2);
-                    else if (!portfolio.Positions.Any(p => p.InstrumentUid == share.InstrumentId))
-                        await myBot.ordersHandler.PostSellOrder(accountId, share.InstrumentId, 1);
-                }
-            }*/
-
-            Console.WriteLine("Бот заснул на 60 минут");
-            //await myBot.startTrading(sharesStocksList);
-            Thread.Sleep(60 *   // minutes to sleep
-             60 *   // seconds to a minute
-             1000); // milliseconds to a second
+            catch { continue; }
         }        
         Console.ReadLine();
     }

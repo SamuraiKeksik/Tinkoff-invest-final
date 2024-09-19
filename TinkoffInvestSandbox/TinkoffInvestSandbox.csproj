@@ -8,10 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Quartz" Version="3.13.0" />
     <PackageReference Include="Tinkoff.InvestApi" Version="0.6.14" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Tinkoff-telegramm\Tinkoff-telegramm.csproj" />
     <ProjectReference Include="..\TinkoffInvestLib\TinkoffInvestLibSandbox.csproj" />
   </ItemGroup>
 
