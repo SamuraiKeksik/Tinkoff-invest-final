@@ -98,6 +98,21 @@ namespace TinkoffInvestLibSandbox
         }
 
         /// <summary>
+        /// Метод возвращает доступный остаток для вывода средств 
+        /// </summary>
+        /// <param name="account">Счет для сбора информации</param>
+        /// <returns>Сумма доступного возврата</returns>
+        public async Task<decimal> GetSandboxWithdrawLimitAsync(Account account)
+        {
+            if (account == null) { return 0; } 
+            var request = new WithdrawLimitsRequest { AccountId = account.Id };
+            var response = await Client.Sandbox.GetSandboxWithdrawLimitsAsync(request);
+
+            return response.Money.First().ToDecimal();
+        }
+
+
+        /// <summary>
         /// Метод возвращает информацию о торговых поручениях
         /// </summary>
         /// <param name="ordersStates">Список заявок торговых поручений</param>
@@ -141,6 +156,7 @@ namespace TinkoffInvestLibSandbox
             if (portfolioPositions.Count == 0) { result += "\tПортфель пуст!\n"; }
             else
             {
+                decimal positionsSum = 0;
                 foreach (var position in portfolioPositions)
                 {
                     if (Shares.Any(s => s.Uid == position.InstrumentUid))     //Если торговое поручение относится к акциям 
@@ -151,14 +167,20 @@ namespace TinkoffInvestLibSandbox
                     else if (Futures.Any(s => s.Uid == position.InstrumentUid))     //Если торговое поручение относится к фьючерсам 
                     {                                                           //То добавляет к результату описание для фьючерса
                         var future = Futures.First(s => s.Uid == position.InstrumentUid);
-                        result += $"\t{future.Ticker} - фьючерс | {future.Name}, цена за 1 - {position.CurrentPrice}, количество - {position.Quantity}, вариационная маржа - {position.VarMargin}\n";
+                        result += $"\t{future.Ticker} - фьючерс | {future.Name}, цена за 1 - {position.CurrentPrice}, количество - {position.Quantity}\n";
                     }
                     else                                                        //Если торговое поручение неизвестно к чему относится 
                     {                                                           //То добавляет к результату обобщенное описание 
-                        result += $"\t{position.PositionUid} - неизвестно | количество - {position.Quantity}, цена за 1 - {position.CurrentPrice}";
+                        result += $"\t{position.PositionUid} - неизвестно | количество - {position.Quantity}, цена за 1 - {position.CurrentPrice}\n";
                     }
-                    result += "\n";
+
+                    if (position.Figi == "RUB000UTSTOM")                    
+                        positionsSum += position.Quantity;                    
+                    else
+                        positionsSum += position.AveragePositionPrice;
                 }
+                result += $"\tОбщаясредняя сумма позиций: {positionsSum}";
+                result += "\n";
             }
             return result;
         }
@@ -213,20 +235,31 @@ namespace TinkoffInvestLibSandbox
         /// <exception cref="Exception"></exception>
         public async Task<decimal> GetCurrentPriceOfInstrumentAsync(string ticker)
         {
-            string instrumentId;
-            if (Shares.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+            try
             {
-                instrumentId = Shares.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+                string instrumentId;
+                if (Shares.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+                {
+                    instrumentId = Shares.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+                }
+                else if (Futures.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+                {
+                    instrumentId = Futures.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+                }
+                else throw new Exception("Тикер не найден"!);
+
+                var request = new GetLastPricesRequest() { InstrumentId = { instrumentId } };
+                var response = await Client.MarketData.GetLastPricesAsync(request);
+                return response.LastPrices.First().Price;
             }
-            else if (Futures.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+            catch (RpcException e)
             {
-                instrumentId = Futures.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+                using (StreamWriter writer = new StreamWriter("BotErrors.txt", true))
+                {
+                    await writer.WriteLineAsync($"\tОшибка по тикеру {ticker} - " + e.ToString());
+                }
+                return 0;
             }
-            else throw new Exception("Тикер не найден"!);
-            
-            var request = new GetClosePricesRequest() { Instruments = { new InstrumentClosePriceRequest() { InstrumentId = instrumentId } } };
-            var response = await Client.MarketData.GetClosePricesAsync(request);
-            return response.ClosePrices.First().Price;
         }
 
         /// <summary>
@@ -280,6 +313,25 @@ namespace TinkoffInvestLibSandbox
         }
 
         /// <summary>
+        /// Метод очищает счет путем его удаления и созданием нового с тем же именем
+        /// </summary>
+        /// <param name="account">Экземпляр счета для очистки</param>
+        /// <param name="money">Сумма для пополнения счета</param>
+        /// <returns>true при успешном очищении счета, иначе false</returns>
+        public async Task<bool> ClearSandboxAccountAsync(Account account, decimal money) //Метод зачисляет деньги на счет
+        {
+            if (!Accounts.Any(a => a.Id == account.Id)) //Если счет не найден в списке, то false
+                return false;
+            var accountName = account.Name;
+            if (!await DeleteSandboxAccountAsync(account) || !await CreateSandboxAccountAsync(accountName))
+                return false;
+            if (!await PayInSandboxAccountAsync(Accounts.First(a => a.Name == accountName), money))
+                return false;
+
+            return true; //true при успешном пополнении счета
+        }
+
+        /// <summary>
         /// Метод выставляет заявку на покупку или продажу инструмента
         /// </summary>
         /// <param name="account">Счет от которого выставляется заявка</param>
@@ -314,7 +366,7 @@ namespace TinkoffInvestLibSandbox
             {
                 using (StreamWriter writer = new StreamWriter("BotErrors.txt", true))
                 {
-                    await writer.WriteLineAsync(e.ToString());
+                    await writer.WriteLineAsync($"\tОшибка по тикеру {ticker} - " + e.ToString());
                 }
                 return false;
             }
@@ -498,6 +550,17 @@ namespace TinkoffInvestLibSandbox
         }*/
         }
 
-
+        /// <summary>
+        /// Метод определяет по тикеру является ли инструмент фьючерсом
+        /// </summary>
+        /// <param name="ticker">Тикер инструмента</param>
+        /// <returns>true если инструмент является фьючерсом, иначе false</returns>
+        public bool? IsItFuture(string ticker)
+        {
+            if (ticker == null) return null;
+            if (Futures.Any(f => f.Ticker.ToUpper() == ticker.ToUpper()))
+                return true;
+            else return false;
+        }
     }
 }

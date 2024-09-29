@@ -16,13 +16,17 @@ namespace TinkoffInvestSandbox
 {
     internal class Traiding : IJob
     {
-        int maxLots = 1;
-        int minLots = 1;
+        int maxLots = 1;    //Сколько лотов в шорт
+        int minLots = 1;    //Сколько лотов в лонг
         List<string> tickers = new List<string>()       //Список тикеров для торговли
             {
-                "NGU4",
+                /*"NGU4",
                 "SVU4",
-                "MMU4",
+                "MMU4",*/
+                "OZON",
+                "ALRS",
+                "AFLT",
+                "VTBR",
             };
 
         public async Task Execute(IJobExecutionContext context)
@@ -31,53 +35,73 @@ namespace TinkoffInvestSandbox
 
             if (bot.Accounts.Count == 0) return;    //Если нет счетов то выходит из метода
             if (DateTime.Now > DateTime.Parse("20:05") || DateTime.Now < DateTime.Parse("8:00")) return;   // торговля ведется с 8:00 до 20:00
+            //if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday) return;   // торговля ведется с понедельника по пятницу
 
             var account = bot.Accounts.First();
             var positions = await bot.GetPortfolioInstrumentsAsync(account);
             using (StreamWriter writer = new StreamWriter("BotLogs.txt", true))
             {
-                await writer.WriteLineAsync(DateTime.Now.ToString());
-                foreach (var ticker in tickers)
+                using (StreamWriter errorsWriter = new StreamWriter("BotErrors.txt", true))
                 {
-                    var lastClosePrice = await bot.GetCurrentPriceOfInstrumentAsync(ticker);
-                    var candles = await bot.GetSandboxCandlesListAsync(ticker, CandleInterval.Hour);
-                    if (bot.CalculateHeikinAshi(candles, 10, 10))
+                    await writer.WriteLineAsync(DateTime.Now.ToString());
+                    await errorsWriter.WriteLineAsync(DateTime.Now.ToString());
+                    foreach (var ticker in tickers)
                     {
-                        if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
+                        try
                         {
-                            if (await bot.PlaceOrderAsync(account, ticker, maxLots, OrderDirection.Buy))
-                                await writer.WriteLineAsync($"Купил {ticker}, {maxLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * maxLots}");
-                            else await writer.WriteLineAsync($"Бот не смог купить {ticker}, {maxLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * maxLots}");
-                        }
-                        else if (await bot.GetLotsOfInstrumentAsync(account, ticker) < 0)
-                        {
-                            if (await bot.PlaceOrderAsync(account, ticker, maxLots + minLots, OrderDirection.Buy))
-                                await writer.WriteLineAsync($"Купил {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
-                            else await writer.WriteLineAsync($"Бот не смог купить {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
-                        }
-                        await MyTelegramBot.SendMeMessage($"{ticker} - купить");
-                        //купить
-                    }
-                    else
-                    {
-                        if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
-                        {
-                            if (await bot.PlaceOrderAsync(account, ticker, minLots, OrderDirection.Sell))
-                                await writer.WriteLineAsync($"Продал {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
-                            else await writer.WriteLineAsync($"Бот не смог продать {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
+                            var lastClosePrice = await bot.GetCurrentPriceOfInstrumentAsync(ticker);
+                            if (lastClosePrice == 0) return;
+                            var candles = await bot.GetSandboxCandlesListAsync(ticker, CandleInterval.Hour);
+                            if (bot.CalculateHeikinAshi(candles, 10, 10))
+                            {
+                                if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
+                                {
+                                    if (await bot.PlaceOrderAsync(account, ticker, maxLots, OrderDirection.Buy))
+                                        await writer.WriteLineAsync($"Купил {ticker}, {maxLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * maxLots}");
+                                    else await writer.WriteLineAsync($"Бот не смог купить {ticker}, {maxLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * maxLots}");
+                                }
+                                else if (await bot.GetLotsOfInstrumentAsync(account, ticker) < 0)
+                                {
+                                    if (await bot.PlaceOrderAsync(account, ticker, maxLots + minLots, OrderDirection.Buy))
+                                        await writer.WriteLineAsync($"Купил {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
+                                    else await writer.WriteLineAsync($"Бот не смог купить {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
+                                }
+                                //await MyTelegramBot.SendJaroslavMessage($"{ticker} - купить");
+                                await MyTelegramBot.SendMeMessage($"{ticker} - купить");
+                                //купить
+                            }
+                            else
+                            {
+                                if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
+                                {
+                                    if (bot.IsItFuture(ticker) == null || bot.IsItFuture(ticker) == true)                                     
+                                        await writer.WriteLineAsync($"Бот не смог продать фьючерс {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}"); 
+                                    else if (await bot.PlaceOrderAsync(account, ticker, minLots, OrderDirection.Sell))
+                                        await writer.WriteLineAsync($"Продал {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
+                                    else await writer.WriteLineAsync($"Бот не смог продать {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
 
+                                }
+                                else if (await bot.GetLotsOfInstrumentAsync(account, ticker) > 0)
+                                {
+                                    if (bot.IsItFuture(ticker) == null || bot.IsItFuture(ticker) == true)
+                                        await writer.WriteLineAsync($"Бот не смог продать фьючерс {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
+                                    else if (await bot.PlaceOrderAsync(account, ticker, maxLots + minLots, OrderDirection.Sell))
+                                        await writer.WriteLineAsync($"Продал {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
+                                    else await writer.WriteLineAsync($"Бот не смог продать {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
+                                }
+                                //await MyTelegramBot.SendJaroslavMessage($"{ticker} - Продать");
+                                await MyTelegramBot.SendMeMessage($"{ticker} - Продать");
+                                //продать
+                            }
                         }
-                        else if (await bot.GetLotsOfInstrumentAsync(account, ticker) > 0)
+                        catch (Exception ex)
                         {
-                            if (await bot.PlaceOrderAsync(account, ticker, maxLots + minLots, OrderDirection.Sell))
-                                await writer.WriteLineAsync($"Продал {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
-                            else await writer.WriteLineAsync($"Бот не смог продать {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");                                                       
+                            await errorsWriter.WriteLineAsync($"\tНеизвестная ошибка по тикеру {ticker} - " + ex.ToString());
                         }
-                        await MyTelegramBot.SendMeMessage($"{ticker} - Продать");
-                        //продать
                     }
-
                 }
+                var accountInfo = await bot.GetSandboxAccountInfoAsync(account);
+                await writer.WriteLineAsync($"{accountInfo}");
                 await writer.WriteLineAsync();
             }
             //await MyTelegramBot.SendMeMessage(await bot.GetSandboxAccountInfoAsync(bot.Accounts.First()));
