@@ -23,8 +23,8 @@ namespace TinkoffInvestLibSandbox
             if (DateTime.Now.Hour == 23) {startTime.AddDays(1);}  //Если бота запустили в 23 часа, то день запуска - завтра
             ITrigger trigger = TriggerBuilder.Create()  // создаем триггер
                 .WithIdentity("trigger1", "group1")  // идентифицируем триггер с именем и группой
-                //.StartAt(startTime) // запуск в 10:00
-                .StartNow()
+                .StartAt(startTime) // запуск в 10:00
+                //.StartNow()
                 .WithSimpleSchedule(x => x              // настраиваем выполнение действия
                     .WithIntervalInHours(1)             // через 1 час
                     .RepeatForever())                   // бесконечное повторение

@@ -20,13 +20,9 @@ namespace TinkoffInvestSandbox
         int minLots = 1;    //Сколько лотов в лонг
         List<string> tickers = new List<string>()       //Список тикеров для торговли
             {
-                /*"NGU4",
+                "NGU4",
                 "SVU4",
-                "MMU4",*/
-                "OZON",
-                "ALRS",
-                "AFLT",
-                "VTBR",
+                "MMU4",
             };
 
         public async Task Execute(IJobExecutionContext context)
@@ -66,8 +62,8 @@ namespace TinkoffInvestSandbox
                                         await writer.WriteLineAsync($"Купил {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
                                     else await writer.WriteLineAsync($"Бот не смог купить {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
                                 }
-                                //await MyTelegramBot.SendJaroslavMessage($"{ticker} - купить");
-                                await MyTelegramBot.SendMeMessage($"{ticker} - купить");
+                                await MyTelegramBot.SendJaroslavMessage($"{ticker} - купить");
+                                //await MyTelegramBot.SendMeMessage($"{ticker} - купить");
                                 //купить
                             }
                             else
@@ -89,8 +85,8 @@ namespace TinkoffInvestSandbox
                                         await writer.WriteLineAsync($"Продал {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
                                     else await writer.WriteLineAsync($"Бот не смог продать {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
                                 }
-                                //await MyTelegramBot.SendJaroslavMessage($"{ticker} - Продать");
-                                await MyTelegramBot.SendMeMessage($"{ticker} - Продать");
+                                await MyTelegramBot.SendJaroslavMessage($"{ticker} - Продать");
+                                //await MyTelegramBot.SendMeMessage($"{ticker} - Продать");
                                 //продать
                             }
                         }
