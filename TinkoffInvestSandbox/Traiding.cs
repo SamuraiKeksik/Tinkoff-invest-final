@@ -20,9 +20,12 @@ namespace TinkoffInvestSandbox
         int minLots = 1;    //Сколько лотов в лонг
         List<string> tickers = new List<string>()       //Список тикеров для торговли
             {
-                "NGU4",
-                "SVU4",
-                "MMU4",
+                "NGV4",
+                "MMZ4",
+                "SVZ4",
+                "CRZ4",
+                "CCZ4",
+                "BRV4",
             };
 
         public async Task Execute(IJobExecutionContext context)
@@ -70,8 +73,8 @@ namespace TinkoffInvestSandbox
                             {
                                 if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
                                 {
-                                    if (bot.IsItFuture(ticker) == null || bot.IsItFuture(ticker) == true)                                     
-                                        await writer.WriteLineAsync($"Бот не смог продать фьючерс {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}"); 
+                                    if (bot.IsItFuture(ticker) == null || bot.IsItFuture(ticker) == true)
+                                        await writer.WriteLineAsync($"Бот не смог продать фьючерс {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
                                     else if (await bot.PlaceOrderAsync(account, ticker, minLots, OrderDirection.Sell))
                                         await writer.WriteLineAsync($"Продал {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
                                     else await writer.WriteLineAsync($"Бот не смог продать {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
@@ -80,7 +83,11 @@ namespace TinkoffInvestSandbox
                                 else if (await bot.GetLotsOfInstrumentAsync(account, ticker) > 0)
                                 {
                                     if (bot.IsItFuture(ticker) == null || bot.IsItFuture(ticker) == true)
-                                        await writer.WriteLineAsync($"Бот не смог продать фьючерс {ticker}, {minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * minLots}");
+                                    {
+                                        if (await bot.PlaceOrderAsync(account, ticker, maxLots, OrderDirection.Sell))
+                                            await writer.WriteLineAsync($"Продал {ticker}, {maxLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
+                                        else await writer.WriteLineAsync($"Бот не смог продать {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
+                                    }
                                     else if (await bot.PlaceOrderAsync(account, ticker, maxLots + minLots, OrderDirection.Sell))
                                         await writer.WriteLineAsync($"Продал {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
                                     else await writer.WriteLineAsync($"Бот не смог продать {ticker}, {maxLots + minLots} лотов, цена за единицу - {lastClosePrice}, всего - {lastClosePrice * (maxLots + minLots)}");
