@@ -428,9 +428,9 @@ namespace TinkoffInvestLibSandbox
         /// <param name="prices">Список цен</param>
         /// <param name="length">количество временных отрезков, за который считается средняя </param>
         /// <returns></returns>
-        private decimal CalculateEma(List<decimal> prices, int length)
+        public static decimal CalculateEma(List<decimal> prices, int length)
         {
-            int n = length; //длина
+            int n = prices.Count > length ? length : prices.Count; //длина
             decimal k = (decimal)2 / (n + 1); //вес
             decimal ema = 0; //текущее ема
             var currentCandleCost = prices[prices.Count - n];
@@ -455,7 +455,7 @@ namespace TinkoffInvestLibSandbox
         /// <param name="length">Начальная длина</param>
         /// <param name="length2">Конечная длина</param>
         /// <returns>true если купить и false если продать</returns>
-        public bool CalculateHeikinAshi(List<HistoricCandle> candles, int length, int length2)
+        public static bool CalculateHeikinAshi(List<HistoricCandle> candles, int length, int length2)
         {
             List<decimal> candlesOpenCosts = new List<decimal>();
             List<decimal> candlesCloseCosts = new List<decimal>();

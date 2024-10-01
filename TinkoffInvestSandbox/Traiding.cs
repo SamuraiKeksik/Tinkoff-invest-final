@@ -51,7 +51,7 @@ namespace TinkoffInvestSandbox
                             var lastClosePrice = await bot.GetCurrentPriceOfInstrumentAsync(ticker);
                             if (lastClosePrice == 0) return;
                             var candles = await bot.GetSandboxCandlesListAsync(ticker, CandleInterval.Hour);
-                            if (bot.CalculateHeikinAshi(candles, 10, 10))
+                            if (TinkoffInvestSandboxBot.CalculateHeikinAshi(candles, 10, 10))
                             {
                                 if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
                                 {
