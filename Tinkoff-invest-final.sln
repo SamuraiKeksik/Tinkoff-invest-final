@@ -3,17 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tinkoff-invest-final", "Tinkoff-invest-final\Tinkoff-invest-final.csproj", "{333B9562-C3AD-48B8-8410-B72A32EF4328}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tinkoff-invest-WPF", "Tinkoff-invest-WPF\Tinkoff-invest-WPF.csproj", "{54894CD7-B977-4B36-8C6B-F421AD99A10B}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tinkoff-Invest-Production", "Tinkoff-Invest-Production\Tinkoff-Invest-Production.csproj", "{49D90521-3E86-4F0F-9CE3-CA615AF80E25}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tinkoff-telegramm", "Tinkoff-telegramm\Tinkoff-telegramm.csproj", "{12BA921B-72D2-4FAF-8B6C-5778CB52540A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TinkoffInvestLibSandbox", "TinkoffInvestLib\TinkoffInvestLibSandbox.csproj", "{C55B814E-6F13-4A41-892A-69F46239060A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinkoffInvestSandbox", "TinkoffInvestSandbox\TinkoffInvestSandbox.csproj", "{40BBBA4E-5C5C-4344-888A-5D982AD075A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TinkoffInvestSandbox", "TinkoffInvestSandbox\TinkoffInvestSandbox.csproj", "{40BBBA4E-5C5C-4344-888A-5D982AD075A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,18 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{333B9562-C3AD-48B8-8410-B72A32EF4328}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{333B9562-C3AD-48B8-8410-B72A32EF4328}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{333B9562-C3AD-48B8-8410-B72A32EF4328}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{333B9562-C3AD-48B8-8410-B72A32EF4328}.Release|Any CPU.Build.0 = Release|Any CPU
-		{54894CD7-B977-4B36-8C6B-F421AD99A10B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{54894CD7-B977-4B36-8C6B-F421AD99A10B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{54894CD7-B977-4B36-8C6B-F421AD99A10B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{54894CD7-B977-4B36-8C6B-F421AD99A10B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{49D90521-3E86-4F0F-9CE3-CA615AF80E25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{49D90521-3E86-4F0F-9CE3-CA615AF80E25}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{49D90521-3E86-4F0F-9CE3-CA615AF80E25}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{49D90521-3E86-4F0F-9CE3-CA615AF80E25}.Release|Any CPU.Build.0 = Release|Any CPU
 		{12BA921B-72D2-4FAF-8B6C-5778CB52540A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{12BA921B-72D2-4FAF-8B6C-5778CB52540A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{12BA921B-72D2-4FAF-8B6C-5778CB52540A}.Release|Any CPU.ActiveCfg = Release|Any CPU
