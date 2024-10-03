@@ -14,29 +14,29 @@ using System.IO;
 
 namespace TinkoffInvestSandbox
 {
-    internal class Traiding : IJob
+    internal class SandboxTraiding : IJob
     {
         int maxLots = 1;    //Сколько лотов в шорт
         int minLots = 1;    //Сколько лотов в лонг
         List<string> tickers = new List<string>()       //Список тикеров для торговли
             {
                 "NGV4",
+                "MMZ4",
+                "SVZ4",
+                "CRZ4",
+                "CCZ4",
+                "BRV4",
             };
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var bot = await TinkoffInvestBot.CreateTinkoffInvestBotAsync("");
-            var account = bot.Accounts.First();
+            var bot = await TinkoffInvestSandboxBot.CreateTinkoffInvestBotAsync("t.HncJqZM1jb2FFJ0DWzWYrcUoc-6KdqLzyUWRCQfIWx3FAAUtV4ju0qX8X10n6sStLkEfsYU3Vc4fR5OG5fghGw");
 
             if (bot.Accounts.Count == 0) return;    //Если нет счетов то выходит из метода
-            if (DateTime.Now > DateTime.Parse("20:05") || DateTime.Now < DateTime.Parse("21:05"))
-            {
-                await bot.SellAllInstrumentsAsync(account);
-            }
             if (DateTime.Now > DateTime.Parse("20:05") || DateTime.Now < DateTime.Parse("8:00")) return;   // торговля ведется с 8:00 до 20:00
             //if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday) return;   // торговля ведется с понедельника по пятницу
 
-            
+            var account = bot.Accounts.First();
             var positions = await bot.GetPortfolioInstrumentsAsync(account);
             using (StreamWriter writer = new StreamWriter("BotLogs.txt", true))
             {
@@ -50,7 +50,7 @@ namespace TinkoffInvestSandbox
                         {
                             var lastClosePrice = await bot.GetCurrentPriceOfInstrumentAsync(ticker);
                             if (lastClosePrice == 0) return;
-                            var candles = await bot.GetCandlesListAsync(ticker, CandleInterval.Hour);
+                            var candles = await bot.GetSandboxCandlesListAsync(ticker, CandleInterval.Hour);
                             if (TinkoffInvestSandboxBot.CalculateHeikinAshi(candles, 10, 10))
                             {
                                 if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
@@ -103,7 +103,7 @@ namespace TinkoffInvestSandbox
                         }
                     }
                 }
-                var accountInfo = await bot.GetAccountInfoAsync(account);
+                var accountInfo = await bot.GetSandboxAccountInfoAsync(account);
                 await writer.WriteLineAsync($"{accountInfo}");
                 await writer.WriteLineAsync();
             }

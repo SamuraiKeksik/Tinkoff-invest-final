@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TinkoffInvestSandbox;
 
-namespace TinkoffInvestLibSandbox
+namespace TinkoffInvestLib
 {
     internal class TradingScheduler
     {
@@ -17,7 +17,7 @@ namespace TinkoffInvestLibSandbox
             IScheduler scheduler = await StdSchedulerFactory.GetDefaultScheduler();
             await scheduler.Start();
 
-            IJobDetail job = JobBuilder.Create<Traiding>().Build();
+            IJobDetail job = JobBuilder.Create<SandboxTraiding>().Build();
 
             var startTime = DateTime.Parse($"{DateTime.Now.Hour + 1}:05");  //время начала бота назначается в следующий час и 5 минут
             if (DateTime.Now.Hour == 23) {startTime.AddDays(1);}  //Если бота запустили в 23 часа, то день запуска - завтра

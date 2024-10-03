@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Tinkoff.InvestApi.V1;
-using TinkoffInvestLibSandbox;
+using TinkoffInvestLib;
 
 namespace TinkoffInvestSandbox
 {

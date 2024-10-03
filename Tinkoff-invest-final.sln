@@ -5,9 +5,9 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tinkoff-telegramm", "Tinkoff-telegramm\Tinkoff-telegramm.csproj", "{12BA921B-72D2-4FAF-8B6C-5778CB52540A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TinkoffInvestLibSandbox", "TinkoffInvestLib\TinkoffInvestLibSandbox.csproj", "{C55B814E-6F13-4A41-892A-69F46239060A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TinkoffInvestLib", "TinkoffInvestLib\TinkoffInvestLib.csproj", "{C55B814E-6F13-4A41-892A-69F46239060A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TinkoffInvestSandbox", "TinkoffInvestSandbox\TinkoffInvestSandbox.csproj", "{40BBBA4E-5C5C-4344-888A-5D982AD075A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TinkoffInvest", "TinkoffInvestSandbox\TinkoffInvest.csproj", "{40BBBA4E-5C5C-4344-888A-5D982AD075A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

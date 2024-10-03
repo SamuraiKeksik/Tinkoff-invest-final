@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tinkoff-telegramm\Tinkoff-telegramm.csproj" />
-    <ProjectReference Include="..\TinkoffInvestLib\TinkoffInvestLibSandbox.csproj" />
+    <ProjectReference Include="..\TinkoffInvestLib\TinkoffInvestLib.csproj" />
   </ItemGroup>
 
 </Project>

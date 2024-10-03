@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Tinkoff.InvestApi.V1;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace TinkoffInvestLibSandbox
+namespace TinkoffInvestLib
 {
     public static class ConvertExtension
     {
