@@ -449,7 +449,55 @@ namespace TinkoffInvestLib
             var l2 = CalculateEma(haLow, length2);
 
             return o2 > c2 ? false : true; // false - продать, true - купить
-        }            
+        }
+
+        /// <summary>
+        /// Модифицированная версия CalculateHeikinAshi
+        /// </summary>
+        /// <param name="candles">Список свечей</param>
+        /// <param name="length">Начальная длина</param>
+        /// <param name="length2">Конечная длина</param>
+        /// <returns>true если купить и false если продать</returns>
+        public static bool ModifiedCalculateHeikinAshi(List<HistoricCandle> candles, int length, int length2)
+        {
+            List<decimal> candlesOpenCosts = new List<decimal>();
+            List<decimal> candlesCloseCosts = new List<decimal>();
+            List<decimal> candlesHighCosts = new List<decimal>();
+            List<decimal> candlesLowCosts = new List<decimal>();
+            foreach (var item in candles)
+            {
+                candlesOpenCosts.Add(Convert.ToDecimal(item.Open));
+                candlesCloseCosts.Add(Convert.ToDecimal(item.Close));
+                candlesHighCosts.Add(Convert.ToDecimal(item.High));
+                candlesLowCosts.Add(Convert.ToDecimal(item.Low));
+            }
+            var o = CalculateEma(candlesCloseCosts, length); //open - массив цен открытия
+            var c = CalculateEma(candlesOpenCosts, length); //open - массив цен закрытия
+            var h = CalculateEma(candlesHighCosts, length);
+            var l = CalculateEma(candlesLowCosts, length);
+
+            List<decimal> haOpen = new List<decimal>();
+            List<decimal> haClose = new List<decimal>();
+            List<decimal> haHigh = new List<decimal>();
+            List<decimal> haLow = new List<decimal>();
+            for (int i = 0; i < length; i++)
+            {
+                haClose.Add((o + h + l + c) / 4);
+                if (haOpen.Count < 1) haOpen.Add((o + c + o) / 3);
+                else haOpen.Add((haOpen[i - 1] + haClose[i]) / 2);
+
+                haHigh.Add(decimal.Max(h, decimal.Max(haOpen[i], haClose[i])));
+                haLow.Add(decimal.Min(l, decimal.Min(haOpen[i], haClose[i])));
+            }
+
+            var o2 = CalculateEma(haOpen, length2); //рассчитывается ЕМА по списку цен открытия
+            var c2 = CalculateEma(haClose, length2);
+            var h2 = CalculateEma(haHigh, length2);
+            var l2 = CalculateEma(haLow, length2);
+
+            return o2 < c2 ? false : true; // false - продать, true - купить
+        }
+
 
         /// <summary>
         /// Метод определяет по тикеру является ли инструмент фьючерсом

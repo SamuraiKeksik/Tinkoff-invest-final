@@ -5,23 +5,17 @@ using TinkoffInvestLib;
 using TinkoffInvestSandbox;
 
 
-//HistoryCalculator.FinamCalculator(@"C:\Users\samur\Desktop\SVZ4202312_240801_241001.csv");
+//HistoryCalculator.FinamCalculator(@"C:\Users\samur\Desktop\SVZ4_макс_1час.csv");
 
-/*var tinkoffBot = await TinkoffInvestSandboxBot.CreateTinkoffInvestBotAsync("t.HncJqZM1jb2FFJ0DWzWYrcUoc-6KdqLzyUWRCQfIWx3FAAUtV4ju0qX8X10n6sStLkEfsYU3Vc4fR5OG5fghGw");
+var tinkoffBot = await TinkoffInvestSandboxBot.CreateTinkoffInvestBotAsync("t.HncJqZM1jb2FFJ0DWzWYrcUoc-6KdqLzyUWRCQfIWx3FAAUtV4ju0qX8X10n6sStLkEfsYU3Vc4fR5OG5fghGw");
 await MyTelegramBot.SendMeMessage("Бот включен!");
-await MyTelegramBot.SendMeMessage(await tinkoffBot.GetSandboxAccountInfoAsync(tinkoffBot.Accounts.First()));*/
-
-var tinkoffBot = await TinkoffInvestBot.CreateTinkoffInvestBotAsync("t.deWIHc75EVsSO_KlIcODqpIeu9r5v1kSdmfPWBYOAWbYrj9nrAZ1tGfuoEzw4oWElOu_xoA7a_vif4OW9imOgw");
-foreach (var account in tinkoffBot.Accounts)
-{
-    Console.WriteLine(await tinkoffBot.GetAccountInfoAsync(account));
-}
+await MyTelegramBot.SendMeMessage(await tinkoffBot.GetSandboxAccountInfoAsync(tinkoffBot.Accounts.First()));
 
 
-/*TradingScheduler.Start();   //Запуск бота
+TradingScheduler.Start();   //Запуск бота
 Console.WriteLine("Бот работает!");
 while (true)
-{}*/
+{}
 
 
 

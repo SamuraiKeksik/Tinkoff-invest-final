@@ -25,15 +25,14 @@ namespace TinkoffInvestSandbox
                 "SVZ4",
                 "CRZ4",
                 "CCZ4",
-                "BRV4",
-            };
-
+                "BRX4"
+        };
         public async Task Execute(IJobExecutionContext context)
         {
             var bot = await TinkoffInvestSandboxBot.CreateTinkoffInvestBotAsync("t.HncJqZM1jb2FFJ0DWzWYrcUoc-6KdqLzyUWRCQfIWx3FAAUtV4ju0qX8X10n6sStLkEfsYU3Vc4fR5OG5fghGw");
 
             if (bot.Accounts.Count == 0) return;    //Если нет счетов то выходит из метода
-            if (DateTime.Now > DateTime.Parse("20:05") || DateTime.Now < DateTime.Parse("8:00")) return;   // торговля ведется с 8:00 до 20:00
+            if (DateTime.Now > DateTime.Parse("23:00") || DateTime.Now < DateTime.Parse("8:00")) return;   // торговля ведется с 8:00 до 23:00
             //if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday) return;   // торговля ведется с понедельника по пятницу
 
             var account = bot.Accounts.First();
@@ -51,7 +50,7 @@ namespace TinkoffInvestSandbox
                             var lastClosePrice = await bot.GetCurrentPriceOfInstrumentAsync(ticker);
                             if (lastClosePrice == 0) return;
                             var candles = await bot.GetSandboxCandlesListAsync(ticker, CandleInterval.Hour);
-                            if (TinkoffInvestSandboxBot.CalculateHeikinAshi(candles, 10, 10))
+                            if (TinkoffInvestSandboxBot.ModifiedCalculateHeikinAshi(candles, 2, 2))
                             {
                                 if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
                                 {

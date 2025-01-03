@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="TinkoffLogo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Tinkoff.InvestApi" Version="0.6.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TinkoffInvestLib\TinkoffInvestLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="TinkoffLogo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+</Project>

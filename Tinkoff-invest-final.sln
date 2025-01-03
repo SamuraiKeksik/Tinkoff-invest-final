@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TinkoffInvestLib", "Tinkoff
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TinkoffInvest", "TinkoffInvestSandbox\TinkoffInvest.csproj", "{40BBBA4E-5C5C-4344-888A-5D982AD075A4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinkoffInvestApp", "TinkoffInvestApp\TinkoffInvestApp.csproj", "{FEDA93FA-ECB4-48ED-A082-938D38A84243}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{40BBBA4E-5C5C-4344-888A-5D982AD075A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40BBBA4E-5C5C-4344-888A-5D982AD075A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40BBBA4E-5C5C-4344-888A-5D982AD075A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEDA93FA-ECB4-48ED-A082-938D38A84243}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEDA93FA-ECB4-48ED-A082-938D38A84243}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEDA93FA-ECB4-48ED-A082-938D38A84243}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEDA93FA-ECB4-48ED-A082-938D38A84243}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

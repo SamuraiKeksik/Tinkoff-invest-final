@@ -43,9 +43,9 @@ namespace TinkoffInvestSandbox
                 decimal bestPrice = 0;
                 int bestPriceLength1 = 0;
                 int bestPriceLength2 = 0;
-                for (int length1 = 1; length1 <= 10; length1++)
+                for (int length1 = 1; length1 <= 50; length1++)
                 {
-                    for (int length2 = 1; length2 <= 10; length2++)
+                    for (int length2 = 2; length2 <= 2; length2++)
                     {
                         int instrumentsCount = 0; //Если инструмент куплен, то 1, если в шорт, то -1, иначе 0
                         decimal lastPrice = dictionaryFields.First().Value[2];   //Последняя цена инструмента
@@ -61,7 +61,7 @@ namespace TinkoffInvestSandbox
                                 Close = dictionaryFields[i][3],
                             };
                             candlesList.Add(candle);
-                            if (TinkoffInvestSandboxBot.CalculateHeikinAshi(candlesList, length1, length2)) //Если купить                       
+                            if (TinkoffInvestSandboxBot.ModifiedCalculateHeikinAshi(candlesList, length1, length2)) //Если купить                       
                             {
                                 if (instrumentsCount == 1)
                                     result += candle.Open - lastPrice;     //Если инструмент куплен то рассчитываем доход
@@ -79,10 +79,10 @@ namespace TinkoffInvestSandbox
                                 if (instrumentsCount == 1)
                                 {
                                     result += candle.Open - lastPrice;     //Если инструмент куплен то рассчитываем доход продаем в шорт
-                                    instrumentsCount = -1;
+                                    instrumentsCount = 0;
                                 }
                                 else if (instrumentsCount == 0)
-                                    instrumentsCount = -1;           //Если инструмент не куплен то покупаем в шорт
+                                    instrumentsCount = 0;           //Если инструмент не куплен то покупаем в шорт
                                 else if (instrumentsCount == -1)
                                     result += lastPrice - candle.Open;     //Если инструмент куплен в шорт то рассчитываем доход
                                 else throw new Exception();
