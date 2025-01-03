@@ -1,18 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Google.Api;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using Tinkoff.InvestApi;
-
+using Visibility = System.Windows.Visibility;
 
 namespace TinkoffInvestApp
 {
@@ -25,7 +14,11 @@ namespace TinkoffInvestApp
         public AuthanticationWindow()
         {
             mainWindow = ((MainWindow)Application.Current.MainWindow);
-            InitializeComponent(); 
+            InitializeComponent();
+
+            TokenTextBox.Text = UsefulFunctions.GetRegistryKey("Token") != " r" ? UsefulFunctions.GetRegistryKey("Token") : "Введите свой токен";
+            SandboxCheckBox.IsChecked = Convert.ToBoolean(UsefulFunctions.GetRegistryKey("IsSandbox"));
+
             var task = Task.Run(() =>
             {
                 while (true)
@@ -81,6 +74,9 @@ namespace TinkoffInvestApp
                     return;
                 }
             }
+
+            UsefulFunctions.SetRegistryKey("Token", token); //Сохраняем токен в регистре
+            UsefulFunctions.SetRegistryKey("IsSandbox", isSandbox.ToString()); //Сохраняем чекбокс песочницы
 
             mainWindow.apiClient = client;
             mainWindow.isSandbox = isSandbox;

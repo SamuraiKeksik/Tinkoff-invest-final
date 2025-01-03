@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -10,6 +12,20 @@ namespace TinkoffInvestApp
 {
     internal static class UsefulFunctions
     {
+
+        private static readonly string registryPath =
+            Path.Combine(Registry.CurrentUser.Name, "TinkoffInvestApp", "TokenSaver");
+
+        public static string GetRegistryKey(string key) //Сохранение в реестре Windows
+        {
+            return (string)Registry.GetValue(registryPath, key, string.Empty);
+        }
+
+        public static void SetRegistryKey(string key, string value) //Изъятие из реестра Windows
+        {
+            Registry.SetValue(registryPath, key, value, RegistryValueKind.String);
+        }
+
         public static bool CheckConnection(String URL)
         {
             try

@@ -20,7 +20,7 @@
         </Grid.ColumnDefinitions>
         <Image Grid.ColumnSpan="2" Grid.RowSpan="3" Source="/TinkoffLogo.png" Margin="30"/>
         <TextBlock x:Name="ErrorTextBlock" HorizontalAlignment="Center" Grid.Row="2"  Grid.ColumnSpan="2" TextWrapping="Wrap" Text="Ошибка!" VerticalAlignment="Bottom" Foreground="Red" Visibility="Hidden" />
-        <TextBox x:Name="TokenTextBox" Grid.ColumnSpan="2" HorizontalAlignment="Center" Grid.Row="3" TextWrapping="Wrap" Text="Tinkoff token" VerticalAlignment="Center" Width="500"/>
+        <TextBox x:Name="TokenTextBox" Grid.ColumnSpan="2" HorizontalAlignment="Center" Grid.Row="3" TextWrapping="Wrap" Text="Введите свой токен" VerticalAlignment="Center" Width="500"/>
         <CheckBox x:Name="SandboxCheckBox" Content="Песочница" HorizontalAlignment="Left" Margin="150,58,0,0" Grid.Row="3" VerticalAlignment="Top"/>
         <Button x:Name="StartButton" Content="Продолжить" HorizontalAlignment="Right" Margin="20" Grid.Row="4" VerticalAlignment="Top" Width="100" Click="StartButton_Click"/>
         <Button x:Name="ExitButton" Content="Выйти" HorizontalAlignment="Left" Margin="20" Grid.Row="4" Grid.Column="1" VerticalAlignment="Top" Width="100" Click="ExitButton_Click"/>
