@@ -1,0 +1,45 @@
+﻿<Window x:Class="TinkoffInvestApp.AddAccountWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TinkoffInvestApp"
+        mc:Ignorable="d"
+        Title="AddAccountWindow" Height="450" Width="800" Closing="Window_Closing">
+    <Grid>
+        <ListBox x:Name="AccountsListBox"  Margin="40,50,575,145" SelectionChanged="AccountsListBox_SelectionChanged">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" Margin="5 0 0 0"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock HorizontalAlignment="Left" Margin="63,23,0,0" TextWrapping="Wrap" Text="Существующие аккаунты: " VerticalAlignment="Top"/>
+        <TextBlock x:Name="AccountsCountTextBlock" HorizontalAlignment="Left" Margin="210,23,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top"/>
+        <ScrollViewer VerticalScrollBarVisibility="Visible" Background="White" Margin="325,115,160,80">
+            <TextBlock x:Name="PortfolioTextBlock"  Margin="20" TextWrapping="Wrap" Text="alsadlaslalsadlaslalsadlaslalsadlaslalsadlaslalsadlasl"
+                               VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            </TextBlock>
+        </ScrollViewer>
+        <Label Content="Портфель" HorizontalAlignment="Left" Margin="314,84,0,0" VerticalAlignment="Top"/>
+        <Label Content="Кошелек" HorizontalAlignment="Left" Margin="325,26,0,0" VerticalAlignment="Top"/>
+        <TextBlock x:Name="WalletTextBlock" HorizontalAlignment="Left" Margin="400,31,0,0" TextWrapping="Wrap" Text="0 Р." VerticalAlignment="Top"/>
+        <Button x:Name="AddAccountButton" Content="Добавить счет" HorizontalAlignment="Left" Margin="70,334,0,0" VerticalAlignment="Top" Click="AddAccountButton_Click"/>
+        <TextBox x:Name="NewAccountNameTextBox" HorizontalAlignment="Left" Margin="70,359,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="NewAccountMoneyTextBox" HorizontalAlignment="Left" Margin="72,382,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" Width="120" PreviewTextInput="NewAccountMoneyTextBox_PreviewTextInput"/>
+        <Button x:Name="GoBackButton" Content="Назад" HorizontalAlignment="Left" Margin="10,8,0,0" VerticalAlignment="Top" Click="GoBackButton_Click"/>
+        <Button x:Name="DeleteAccountButton" Content="Удалить счет" HorizontalAlignment="Left" Margin="49,294,0,0" VerticalAlignment="Top" Click="DeleteAccountButton_Click" />
+        <ComboBox x:Name="SelectedAccountComboBox" HorizontalAlignment="Left" Margin="625,20,0,0" VerticalAlignment="Top" Width="120" SelectionChanged="SelectedAccountComboBox_SelectionChanged">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" Margin="5 0 0 0"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+
+    </Grid>
+</Window>

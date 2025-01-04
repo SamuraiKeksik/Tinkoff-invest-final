@@ -22,36 +22,33 @@ namespace TinkoffInvestApp
     {
         public InvestApiClient apiClient;
         public bool isSandbox;
-        public ObservableCollection<Share> SharesList { get; set; }
-        public ObservableCollection<Future> FuturesList { get; set; }
-
-        public class Example
-        {
-            public string Name { get; set; }
-            public string Ticker { get; set; }
-        }
+        public ObservableCollection<Share> SharesList { get; set; } = new ObservableCollection<Share>();
+        public ObservableCollection<Future> FuturesList { get; set; } = new ObservableCollection<Future>();
+        public List<Account> AccountsList { get; set; } = new List<Account>() { new Account { Name = "Пусто"} };
+        public Account SelectedAccount { get; set; }
 
         public MainWindow()
         {
             InitializeComponent();
+
             //Проверка связи с серверами Тинькофф
             AuthanticationWindow window = new AuthanticationWindow();
             window.Show();          
             this.Visibility = Visibility.Hidden;  
 
-            FuturesList = new ObservableCollection<Future>();
-            InstrumentsListBox.ItemsSource = FuturesList;
-
-            SharesList = new ObservableCollection<Share>();
-            InstrumentsListBox.ItemsSource = SharesList;
-
-
         }
 
-        public void StartApp()
+        public async void StartApp()
         {
             this.Visibility = Visibility.Visible;
             GetInstruments();
+            GetAccounts();
+
+            InstrumentsListBox.ItemsSource = FuturesList;
+            InstrumentsListBox.ItemsSource = SharesList;
+            SelectedAccount = AccountsList.First();
+            AccountNameTextBlock.Text = SelectedAccount.Name;
+
             /* if (isSandbox == true)
                  StartSandbox();*/
 
@@ -70,6 +67,14 @@ namespace TinkoffInvestApp
         private void FuturesButton_Click(object sender, RoutedEventArgs e)
         {
             InstrumentsListBox.ItemsSource = FuturesList;
+        }
+
+
+        private void AddAccountButton_Click(object sender, RoutedEventArgs e)
+        {
+            AddAccountWindow window = new AddAccountWindow();
+            window.Show();
+            this.Visibility = Visibility.Hidden;
         }
 
         private async void GetInstruments()
@@ -91,12 +96,29 @@ namespace TinkoffInvestApp
             }
         }
 
+        private async void GetAccounts()
+        {
+            var request = new GetAccountsRequest();
+            var response = await apiClient.Users.GetAccountsAsync(request);
+            if (response.Accounts.ToList().Count == 0)  //Если аккаунтов у токена нет, то добавляем пустышку для comboBox
+            {
+                AccountsList = new List<Account> { new Account { Name = "Пусто" } };
+            }
+            AccountsList = response.Accounts.ToList();
+            
+        }
+
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             Application.Current.Shutdown();
         }
 
-        
+        private void TimersButton_Click(object sender, RoutedEventArgs e)
+        {
+            /*AddTimerWindow window = new AddTimerWindow();
+            window.Show();
+            this.Visibility = Visibility.Hidden;*/
+        }
     }
 
 

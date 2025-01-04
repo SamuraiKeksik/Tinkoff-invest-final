@@ -14,21 +14,23 @@
             <RowDefinition Height="31*"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="10*"></ColumnDefinition>
-            <ColumnDefinition Width="10*"></ColumnDefinition>
-            <ColumnDefinition Width="40*"></ColumnDefinition>
-            <ColumnDefinition Width="40*"></ColumnDefinition>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="2*"></ColumnDefinition>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="4*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <Grid x:Name="ConnectionStatusGrid" Visibility="Hidden" Grid.ColumnSpan="3" >
+        <Grid x:Name="ConnectionStatusGrid" Visibility="Hidden" Grid.ColumnSpan="5" >
             <Rectangle  VerticalAlignment="Stretch" Fill="#FFFF4549" />
             <TextBlock Text="Отсутствует связь с Tinkoff Invest, проверьте интернет соединение" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White" />
         </Grid>
-        <Grid x:Name="SandboxStatusGrid" Visibility="Visible" Grid.Column="3">
+        <Grid x:Name="SandboxStatusGrid" Visibility="Visible" Grid.Column="5">
             <Rectangle  VerticalAlignment="Stretch" Fill="#FFE2C04E" />
             <TextBlock Text="Вы работаете в песочнице Tinkoff Invest" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" />
             <Image Source="/Assets/free-icon-sandbox-1742378.png" HorizontalAlignment="Left" RenderTransformOrigin="0.783,0.494" Margin="20,5,0,5" Width="20"/>
         </Grid>
-        <ListBox x:Name="InstrumentsListBox"  Grid.Row="1"  Grid.RowSpan="3" Grid.ColumnSpan="2">
+        <ListBox x:Name="InstrumentsListBox"  Grid.RowSpan="4" Grid.ColumnSpan="2" Margin="0,30,0,0">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -37,7 +39,11 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <Button x:Name="SharesButton" Content="Акции" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Click="SharesButton_Click"/>
-        <Button x:Name="FuturesButton" Content="Фьючерсы" Grid.Column="1" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Click="FuturesButton_Click"/>
+        <Button x:Name="SharesButton" Content="Акции" Click="SharesButton_Click"/>
+        <Button x:Name="FuturesButton" Content="Фьючерсы" Grid.Column="1" Click="FuturesButton_Click"/>
+        <Button x:Name="AddAccountButton" Content="Добавить аккаунт" Grid.Column="3" Click="AddAccountButton_Click"/>
+        <Button x:Name="TimersButton" Content="Таймеры" Grid.Column="4" Click="TimersButton_Click"/>
+        <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0">Счет: </TextBlock>
+        <TextBlock x:Name="AccountNameTextBlock" Grid.Column="2" VerticalAlignment="Center" Margin="40,0,0,0">Пусто </TextBlock>
     </Grid>
 </Window>
