@@ -15,13 +15,26 @@ namespace TinkoffInvestLib
         protected override string BotLogsFilePath { get; set; } = "BotLogs.txt";
         protected override string BotErrorsFilePath { get; set; } = "BotErrors.txt";
 
-        protected TinkoffInvestSandboxBot(string token) :base(token){}
+        protected TinkoffInvestSandboxBot(string token, bool isSandbox) : base(token, isSandbox){}
 
+        /// <summary>
+        /// Метод создает экземпляр объекта, обновляет список счетов, акций и фьючерсов, после чего возвращает его
+        /// </summary>
+        /// <returns>Экземпляр бота TinkoffInvestSandboxBot</returns>
+        public new static async Task<TinkoffInvestBot> CreateTinkoffInvestBotAsync(string token) //Создает объект бота и выполняет асинхронный метод
+        {
+            var bot = new TinkoffInvestSandboxBot(token, true);
+            bot.Accounts = await bot.UpdateAccountsAsync();
+            bot.Shares = await bot.GetSharesAsync();
+            bot.Futures = await bot.GetFuturesAsync();
+            bot.Funds = await bot.GetFundsAsync();
+            return bot;
+        }
         /// <summary>
         /// Метод возвращает список аккаунтов, открытых в песочнице
         /// </summary>
         /// <returns>Список аккаунтов</returns>
-        protected override async Task<List<Account>> UpdateAccountsAsync()     
+        public override async Task<List<Account>> UpdateAccountsAsync()     
         {
             var request = new GetAccountsRequest();
             var response = await Client.Sandbox.GetSandboxAccountsAsync(request);

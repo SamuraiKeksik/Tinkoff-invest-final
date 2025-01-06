@@ -27,20 +27,35 @@ namespace TinkoffInvestApp
     public partial class AddAccountWindow : Window
     {
         MainWindow mainWindow;
-        public ObservableCollection<Account> AccountsList { get; set; } = new ObservableCollection<Account>();
         public Account CurrentAccount { get; set; } //Счет выбранный в ListBox
         public Account SelectedAccount { get; set; } //Счет выбранный для работы в главном окне
 
         public AddAccountWindow()
         {
             InitializeComponent();
-            mainWindow = ((MainWindow)Application.Current.MainWindow);
-            GetAccounts();
-            AccountsListBox.ItemsSource = AccountsList;
+            StartWindow();
+            AccountsListBox.ItemsSource = mainWindow.bot.Accounts;
 
             SelectedAccount = mainWindow.SelectedAccount;
-            SelectedAccountComboBox.ItemsSource = AccountsList;
-            if(SelectedAccount != null) SelectedAccountComboBox.SelectedItem = SelectedAccount;
+            SelectedAccountComboBox.ItemsSource = mainWindow.bot.Accounts;
+            SelectedAccountComboBox.SelectedItem = mainWindow.SelectedAccount != null ? mainWindow.SelectedAccount : null;
+
+            var task = Task.Run(() =>
+            {
+                while (true)
+                {
+                    Dispatcher.Invoke(new Action(() => {
+                        AccountsListBox.Items.Refresh();
+                    }));
+                    Thread.Sleep(3000);
+                }
+            });
+        }
+
+        private async void StartWindow()
+        {
+            mainWindow = (MainWindow)Application.Current.MainWindow;
+            await mainWindow.bot.UpdateAccountsAsync();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -54,43 +69,23 @@ namespace TinkoffInvestApp
             mainWindow.AccountNameTextBlock.Text = mainWindow.SelectedAccount.Name;
             mainWindow.Visibility = Visibility.Visible;
             this.Visibility = Visibility.Hidden;
-        }
-
-        private async void GetAccounts()
-        {
-            AccountsList.Clear();
-            var request = new GetAccountsRequest();
-            var response = await mainWindow.apiClient.Users.GetAccountsAsync(request);
-            if (response.Accounts.ToList().Count == 0)  //Если аккаунтов у токена нет, то добавляем пустышку для comboBox
-            {
-                AccountsList = new ObservableCollection<Account>();
-            }
-            foreach (var account in response.Accounts.ToList())
-            {
-                AccountsList.Add(account);
-            }
-            
-
-        }
+        }                   
 
         private async void AccountsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             PortfolioTextBlock.Text = "";
-            CurrentAccount = AccountsList[AccountsListBox.SelectedIndex];
+            CurrentAccount = mainWindow.bot.Accounts[AccountsListBox.SelectedIndex];
+            var portfolio = await mainWindow.bot.GetPortfolioInstrumentsAsync(CurrentAccount);
 
-            //WalletTextBlock.Text = 
-            var portfolioRequest = new PortfolioRequest() { AccountId = CurrentAccount.Id };  //Обрабатывает портфель счета
-            var portfolioResponse = await mainWindow.apiClient.Sandbox.GetSandboxPortfolioAsync(portfolioRequest);
-
-            if(portfolioResponse.Positions.Any(p => p.InstrumentUid == "a92e2e25-a698-45cc-a781-167cf465257c"))
+            if(portfolio.Any(p => p.InstrumentUid == "a92e2e25-a698-45cc-a781-167cf465257c"))
             {
-                var money = portfolioResponse.Positions.First(p => p.InstrumentUid == "a92e2e25-a698-45cc-a781-167cf465257c");
-                portfolioResponse.Positions.Remove(money);
+                var money = portfolio.First(p => p.InstrumentUid == "a92e2e25-a698-45cc-a781-167cf465257c");
+                portfolio.Remove(money);
                 WalletTextBlock.Text = $"{money.Quantity.Units} Р.";
             }
             else
                 WalletTextBlock.Text = $"0 Р.";
-            foreach (var item in portfolioResponse.Positions)
+            foreach (var item in portfolio)
             {
                 PortfolioTextBlock.Text += $"{item.InstrumentUid} - {item.Quantity}" + "\n";
             }
@@ -101,23 +96,16 @@ namespace TinkoffInvestApp
         {
             if(NewAccountNameTextBox.Text != string.Empty)
             {
-                if (AccountsList.Count >= 10) { return; } //Если в песочнице 10 аккаунтов, то API не даст создать новые и выдаст ошибку "InvalidArgument 35001"
-                var createAccountRequest = new OpenSandboxAccountRequest() { Name = NewAccountNameTextBox.Text, };
-                var createAccountResponse = await mainWindow.apiClient.Sandbox.OpenSandboxAccountAsync(createAccountRequest);
+                if (mainWindow.bot.Accounts.Count >= 10) { return; } //Если в песочнице 10 аккаунтов, то API не даст создать новые и выдаст ошибку "InvalidArgument 35001"
+                await ((TinkoffInvestSandboxBot)mainWindow.bot).CreateSandboxAccountAsync(NewAccountNameTextBox.Text);
 
-                if(NewAccountMoneyTextBox.Text != string.Empty)
+                if (NewAccountMoneyTextBox.Text != string.Empty)
                 {
                     decimal money = Convert.ToDecimal(NewAccountMoneyTextBox.Text);
-                    var request = new SandboxPayInRequest
-                    {
-                        AccountId = createAccountResponse.AccountId,
-                        Amount = money.ToMoneyValue()
-                    };
-                    var result = await mainWindow.apiClient.Sandbox.SandboxPayInAsync(request);
-                }        
+                    await ((TinkoffInvestSandboxBot)mainWindow.bot).PayInSandboxAccountAsync(mainWindow.bot.Accounts.First(a => a.Name == NewAccountNameTextBox.Text), money);
+                }
 
-                MessageBox.Show("Счет успешно создан");
-                GetAccounts();
+                await mainWindow.bot.UpdateAccountsAsync();
             }
         }
 
@@ -129,15 +117,13 @@ namespace TinkoffInvestApp
 
         private async void DeleteAccountButton_Click(object sender, RoutedEventArgs e)
         {
-            var request = new CloseSandboxAccountRequest { AccountId = CurrentAccount.Id };
-            var response = await mainWindow.apiClient.Sandbox.CloseSandboxAccountAsync(request);
-            GetAccounts();
-
+            await ((TinkoffInvestSandboxBot)mainWindow.bot).DeleteSandboxAccountAsync(CurrentAccount);
+            await mainWindow.bot.UpdateAccountsAsync();
         }
         
         private void SelectedAccountComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            SelectedAccount = AccountsList[SelectedAccountComboBox.SelectedIndex];
+            SelectedAccount = mainWindow.bot.Accounts[SelectedAccountComboBox.SelectedIndex];
         }
     }
 }

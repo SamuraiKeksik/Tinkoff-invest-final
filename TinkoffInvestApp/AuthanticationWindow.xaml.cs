@@ -1,6 +1,7 @@
 ﻿using Google.Api;
 using System.Windows;
 using Tinkoff.InvestApi;
+using TinkoffInvestLib;
 using Visibility = System.Windows.Visibility;
 
 namespace TinkoffInvestApp
@@ -51,6 +52,7 @@ namespace TinkoffInvestApp
                 try
                 {
                     await client.Sandbox.GetSandboxAccountsAsync(new Tinkoff.InvestApi.V1.GetAccountsRequest());
+                    mainWindow.bot = await TinkoffInvestSandboxBot.CreateTinkoffInvestBotAsync(token);
                 }
                 catch (Grpc.Core.RpcException exception)
                 {
@@ -65,6 +67,7 @@ namespace TinkoffInvestApp
                 try
                 {
                     await client.Users.GetAccountsAsync(new Tinkoff.InvestApi.V1.GetAccountsRequest());
+                    mainWindow.bot = await TinkoffInvestBot.CreateTinkoffInvestBotAsync(token);
                 }
                 catch (Grpc.Core.RpcException exception)
                 {
@@ -76,9 +79,7 @@ namespace TinkoffInvestApp
             }
 
             UsefulFunctions.SetRegistryKey("Token", token); //Сохраняем токен в регистре
-            UsefulFunctions.SetRegistryKey("IsSandbox", isSandbox.ToString()); //Сохраняем чекбокс песочницы
-
-            mainWindow.apiClient = client;
+            UsefulFunctions.SetRegistryKey("IsSandbox", isSandbox.ToString()); //Сохраняем чекбокс песочницы            
             mainWindow.isSandbox = isSandbox;
             mainWindow.StartApp();
             this.Visibility = Visibility.Hidden;

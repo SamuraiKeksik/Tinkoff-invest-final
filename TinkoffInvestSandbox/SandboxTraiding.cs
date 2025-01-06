@@ -49,7 +49,7 @@ namespace TinkoffInvestSandbox
                         {
                             var lastClosePrice = await bot.GetCurrentPriceOfInstrumentAsync(ticker);
                             if (lastClosePrice == 0) return;
-                            var candles = await bot.GetSandboxCandlesListAsync(ticker, CandleInterval.Hour);
+                            var candles = await bot.GetCandlesListAsync(ticker, CandleInterval.Hour);
                             if (TinkoffInvestSandboxBot.ModifiedCalculateHeikinAshi(candles, 2, 2))
                             {
                                 if (await bot.GetLotsOfInstrumentAsync(account, ticker) == 0)
@@ -102,7 +102,7 @@ namespace TinkoffInvestSandbox
                         }
                     }
                 }
-                var accountInfo = await bot.GetSandboxAccountInfoAsync(account);
+                var accountInfo = await bot.GetAccountInfoAsync(account);
                 await writer.WriteLineAsync($"{accountInfo}");
                 await writer.WriteLineAsync();
             }

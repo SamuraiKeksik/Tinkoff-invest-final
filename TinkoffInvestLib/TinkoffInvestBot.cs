@@ -16,15 +16,17 @@ namespace TinkoffInvestLib
         /// <summary>Содержит экземпляр клиента</summary>
         protected InvestApiClient Client { get; set; }
         /// <summary>Содержит список акций доступных для торговли через Tinkoff.InvestApi</summary>
-        protected List<Share> Shares { get; set; } = new List<Share>();
+        public List<Share> Shares { get; protected set; } = new List<Share>();
         /// <summary>Содержит список фьючерсов доступных для торговли через Tinkoff.InvestApi</summary>
-        protected List<Future> Futures { get; set; } = new List<Future>();
+        public List<Future> Futures { get; protected set; } = new List<Future>();
+        /// <summary>Содержит список фондов доступных для торговли через Tinkoff.InvestApi</summary>
+        public List<Etf> Funds { get; protected set; } = new List<Etf>();
         /// <summary>Содержит список счетов в песочнице</summary>        
-        protected List<Account> Accounts { get; set; } = new List<Account>();
+        public List<Account> Accounts { get; protected set; } = new List<Account>();
         protected virtual string BotLogsFilePath { get; set; } = "BotLogs.txt";
         protected virtual string BotErrorsFilePath { get; set; } = "BotErrors.txt";
 
-        protected TinkoffInvestBot(string token)
+        protected TinkoffInvestBot(string token, bool isSandbox)
         {
             var client = InvestApiClientFactory.Create(token, false);
             Client = client;  //Присваивает клиент после создания
@@ -34,12 +36,13 @@ namespace TinkoffInvestLib
         /// Метод создает экземпляр объекта, обновляет список счетов, акций и фьючерсов, после чего возвращает его
         /// </summary>
         /// <returns>Экземпляр бота TinkoffInvestSandboxBot</returns>
-        protected static async Task<TinkoffInvestBot> CreateTinkoffInvestBotAsync(string token) //Создает объект бота и выполняет асинхронный метод
+        public static async Task<TinkoffInvestBot> CreateTinkoffInvestBotAsync(string token) //Создает объект бота и выполняет асинхронный метод
         {            
-            var bot = new TinkoffInvestBot(token);
+            var bot = new TinkoffInvestBot(token, false);
             bot.Accounts = await bot.UpdateAccountsAsync();
             bot.Shares = await bot.GetSharesAsync();
             bot.Futures = await bot.GetFuturesAsync();
+            bot.Funds = await bot.GetFundsAsync();
             return bot;
         }
 
@@ -47,7 +50,7 @@ namespace TinkoffInvestLib
         /// Метод возвращает список аккаунтов
         /// </summary>
         /// <returns>Список аккаунтов</returns>
-        protected virtual async Task<List<Account>> UpdateAccountsAsync()     
+        public virtual async Task<List<Account>> UpdateAccountsAsync()     
         {
             var request = new GetAccountsRequest();
             var response = await Client.Users.GetAccountsAsync(request);
@@ -77,6 +80,24 @@ namespace TinkoffInvestLib
             var response = await Client.Instruments.FuturesAsync(request);
             Futures = response.Instruments.ToList();
             return Futures;
+        }
+        /// <summary>
+        /// Метод возвращает список фьючерсов доступных для торговли на бирже
+        /// </summary>
+        /// <returns>Список фьючерсов</returns>
+        protected async Task<List<Etf>> GetFundsAsync()   
+        {
+            var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
+            var response = await Client.Instruments.EtfsAsync(request);
+            Funds = response.Instruments.ToList();
+            return Funds;
+        }
+
+        public async void UpdateInstrumentsLists()
+        {
+            await GetSharesAsync();
+            await GetFuturesAsync();
+            await GetFundsAsync();
         }
 
         /// <summary>
@@ -305,7 +326,9 @@ namespace TinkoffInvestLib
                     instrumentId = Shares.First(s => s.Ticker.ToUpper() == ticker.ToUpper()).Uid;
                 else if (Futures.Any(s => s.Ticker.ToUpper() == ticker.ToUpper()))
                     instrumentId = Futures.First(s => s.Ticker.ToUpper() == ticker.ToUpper()).Uid;
-                else return false;                  //Если введенный тикер не соответствует акциям и фьючерсам в списке, то возвращает false
+                else if (Funds.Any(s => s.Ticker.ToUpper() == ticker.ToUpper()))
+                    instrumentId = Futures.First(s => s.Ticker.ToUpper() == ticker.ToUpper()).Uid;
+                else return false;                  //Если введенный тикер не соответствует акциям, фьючерсам и фондами в списке, то возвращает false
 
                 var request = new PostOrderRequest()
                 {
