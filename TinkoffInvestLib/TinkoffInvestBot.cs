@@ -14,17 +14,17 @@ namespace TinkoffInvestLib
     public class TinkoffInvestBot
     {
         /// <summary>Содержит экземпляр клиента</summary>
-        private InvestApiClient Client { get; set; }
+        protected InvestApiClient Client { get; set; }
         /// <summary>Содержит список акций доступных для торговли через Tinkoff.InvestApi</summary>
-        private List<Share> Shares { get; set; } = new List<Share>();
+        protected List<Share> Shares { get; set; } = new List<Share>();
         /// <summary>Содержит список фьючерсов доступных для торговли через Tinkoff.InvestApi</summary>
-        private List<Future> Futures { get; set; } = new List<Future>();
+        protected List<Future> Futures { get; set; } = new List<Future>();
         /// <summary>Содержит список счетов в песочнице</summary>        
-        public List<Account> Accounts { get; private set; } = new List<Account>();
-        private string BotLogsFilePath = "BotLogs.txt";
-        private string BotErrorsFilePath = "BotErrors.txt";
+        protected List<Account> Accounts { get; set; } = new List<Account>();
+        protected virtual string BotLogsFilePath { get; set; } = "BotLogs.txt";
+        protected virtual string BotErrorsFilePath { get; set; } = "BotErrors.txt";
 
-        private TinkoffInvestBot(string token)
+        protected TinkoffInvestBot(string token)
         {
             var client = InvestApiClientFactory.Create(token, false);
             Client = client;  //Присваивает клиент после создания
@@ -34,7 +34,7 @@ namespace TinkoffInvestLib
         /// Метод создает экземпляр объекта, обновляет список счетов, акций и фьючерсов, после чего возвращает его
         /// </summary>
         /// <returns>Экземпляр бота TinkoffInvestSandboxBot</returns>
-        public static async Task<TinkoffInvestBot> CreateTinkoffInvestBotAsync(string token) //Создает объект бота и выполняет асинхронный метод
+        protected static async Task<TinkoffInvestBot> CreateTinkoffInvestBotAsync(string token) //Создает объект бота и выполняет асинхронный метод
         {            
             var bot = new TinkoffInvestBot(token);
             bot.Accounts = await bot.UpdateAccountsAsync();
@@ -47,7 +47,7 @@ namespace TinkoffInvestLib
         /// Метод возвращает список аккаунтов
         /// </summary>
         /// <returns>Список аккаунтов</returns>
-        private async Task<List<Account>> UpdateAccountsAsync()     
+        protected virtual async Task<List<Account>> UpdateAccountsAsync()     
         {
             var request = new GetAccountsRequest();
             var response = await Client.Users.GetAccountsAsync(request);
@@ -59,7 +59,7 @@ namespace TinkoffInvestLib
         /// Метод возвращает список акций доступных для торговли на бирже
         /// </summary>
         /// <returns>Список акций</returns>
-        private async Task<List<Share>> GetSharesAsync()   
+        protected async Task<List<Share>> GetSharesAsync()   
         {
             var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
             var response = await Client.Instruments.SharesAsync(request);
@@ -71,7 +71,7 @@ namespace TinkoffInvestLib
         /// Метод возвращает список фьючерсов доступных для торговли на бирже
         /// </summary>
         /// <returns>Список фьючерсов</returns>
-        private async Task<List<Future>> GetFuturesAsync()   
+        protected async Task<List<Future>> GetFuturesAsync()   
         {
             var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
             var response = await Client.Instruments.FuturesAsync(request);
@@ -84,7 +84,7 @@ namespace TinkoffInvestLib
         /// </summary>
         /// <param name="account">Счет для сбора информации</param>
         /// <returns>Строка с информацией о счете</returns>
-        public async Task<string> GetAccountInfoAsync(Account account)
+        public async virtual Task<string> GetAccountInfoAsync(Account account)
         {
             if (account == null) { return "Переданного счета не существует!"; } 
             string result = $"Информация по счету {account.Name} на {DateTime.Now}:\n";    //Создание строки ответа
@@ -106,7 +106,7 @@ namespace TinkoffInvestLib
         /// </summary>
         /// <param name="account">Счет для сбора информации</param>
         /// <returns>Сумма доступного возврата</returns>
-        public async Task<decimal> GetWithdrawLimitAsync(Account account)
+        public virtual async Task<decimal> GetWithdrawLimitAsync(Account account)
         {
             if (account == null) { return 0; } 
             var request = new WithdrawLimitsRequest { AccountId = account.Id };
@@ -150,7 +150,7 @@ namespace TinkoffInvestLib
         /// </summary>
         /// <param name="ordersStates">Список заявок торговых поручений</param>
         /// <returns>Строка с информацией о торговых поручениях</returns>
-        private string GetOrdersInfoAsync(List<Tinkoff.InvestApi.V1.OrderState> ordersStates) //Возвращает информацию в виде строки о торговых поручениях
+        protected string GetOrdersInfoAsync(List<Tinkoff.InvestApi.V1.OrderState> ordersStates) //Возвращает информацию в виде строки о торговых поручениях
         {
             string result = String.Empty;
             if (ordersStates.Count == 0) { result += "\tАктивные торговые поручения отсутствуют!\n"; }
@@ -183,7 +183,7 @@ namespace TinkoffInvestLib
         /// </summary>
         /// <param name="portfolioPositions">Список позиций портфолио</param>
         /// <returns>Строка с информацией о портфолио</returns>
-        private string GetPortfolioInfoAsync(List<PortfolioPosition> portfolioPositions) //Возвращает информацию в виде строки о портфеле
+        protected string GetPortfolioInfoAsync(List<PortfolioPosition> portfolioPositions) //Возвращает информацию в виде строки о портфеле
         {
             string result = string.Empty;
             if (portfolioPositions.Count == 0) { result += "\tПортфель пуст!\n"; }
@@ -215,7 +215,7 @@ namespace TinkoffInvestLib
         /// </summary>
         /// <param name="account">Счет для сбора позиций портфеля</param>
         /// <returns>Список позиций портфеля</returns>
-        public async Task<List<PortfolioPosition>> GetPortfolioInstrumentsAsync(Account account)
+        public virtual async Task<List<PortfolioPosition>> GetPortfolioInstrumentsAsync(Account account)
         {
             var portfolioRequest = new PortfolioRequest() { AccountId = account.Id };  //Обрабатывает портфель счета
             var portfolioResponse = await Client.Operations.GetPortfolioAsync(portfolioRequest);
@@ -295,7 +295,7 @@ namespace TinkoffInvestLib
         /// <param name="quantity">Количество лотов инструмента</param>
         /// <param name="direction">Покупка или продажа</param>
         /// <returns>true в случае успешного выставления заявки, иначе false</returns>
-        public async Task<bool> PlaceOrderAsync(Account account, string ticker, int quantity, OrderDirection direction)
+        public virtual async Task<bool> PlaceOrderAsync(Account account, string ticker, int quantity, OrderDirection direction)
         {
             try
             {
