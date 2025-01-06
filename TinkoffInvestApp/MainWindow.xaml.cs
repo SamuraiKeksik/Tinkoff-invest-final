@@ -22,6 +22,7 @@ namespace TinkoffInvestApp
     {
         public InvestApiClient apiClient;
         public bool isSandbox;
+        public bool selectedInstrumentIsShare;
         public ObservableCollection<Share> SharesList { get; set; } = new ObservableCollection<Share>();
         public ObservableCollection<Future> FuturesList { get; set; } = new ObservableCollection<Future>();
         public List<Account> AccountsList { get; set; } = new List<Account>() { new Account { Name = "Пусто"} };
@@ -43,9 +44,8 @@ namespace TinkoffInvestApp
             this.Visibility = Visibility.Visible;
             GetInstruments();
             GetAccounts();
+            SharesButton_Click(this, new RoutedEventArgs());
 
-            InstrumentsListBox.ItemsSource = FuturesList;
-            InstrumentsListBox.ItemsSource = SharesList;
             SelectedAccount = AccountsList.First();
             AccountNameTextBlock.Text = SelectedAccount.Name;
 
@@ -62,11 +62,13 @@ namespace TinkoffInvestApp
         public void SharesButton_Click(object sender, RoutedEventArgs e)
         {
             InstrumentsListBox.ItemsSource = SharesList;
+            selectedInstrumentIsShare = true;
         }
 
         private void FuturesButton_Click(object sender, RoutedEventArgs e)
         {
             InstrumentsListBox.ItemsSource = FuturesList;
+            selectedInstrumentIsShare = false;
         }
 
 
@@ -115,9 +117,17 @@ namespace TinkoffInvestApp
 
         private void TimersButton_Click(object sender, RoutedEventArgs e)
         {
-            /*AddTimerWindow window = new AddTimerWindow();
+            AddTimerWindow window = new AddTimerWindow();
             window.Show();
-            this.Visibility = Visibility.Hidden;*/
+            if (selectedInstrumentIsShare)
+            {
+                window.SelectedTickerTextBox.Text = SharesList[InstrumentsListBox.SelectedIndex].Ticker;
+            }
+            else
+            {
+                window.SelectedTickerTextBox.Text = FuturesList[InstrumentsListBox.SelectedIndex].Ticker;
+            }
+            this.Visibility = Visibility.Hidden;
         }
     }
 
