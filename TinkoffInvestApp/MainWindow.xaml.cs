@@ -68,6 +68,12 @@ namespace TinkoffInvestApp
             selectedInstrumentIsShare = false;
         }
 
+        private void FundsButton_Click(object sender, RoutedEventArgs e)
+        {
+            InstrumentsListBox.ItemsSource = bot.Funds;
+            selectedInstrumentIsShare = true;
+        }
+
         private void AddAccountButton_Click(object sender, RoutedEventArgs e)
         {
             AddAccountWindow window = new AddAccountWindow();
@@ -82,18 +88,18 @@ namespace TinkoffInvestApp
 
         private void TimersButton_Click(object sender, RoutedEventArgs e)
         {
-            AddTimerWindow window = new AddTimerWindow();
-            window.Show();
+            addTimerWindow.Show();
             if (selectedInstrumentIsShare)
             {
-                window.SelectedTickerTextBox.Text = bot.Shares[InstrumentsListBox.SelectedIndex].Ticker;
+                addTimerWindow.SelectedTickerTextBox.Text = bot.Funds[InstrumentsListBox.SelectedIndex].Ticker;
             }
             else
             {
-                window.SelectedTickerTextBox.Text = bot.Futures[InstrumentsListBox.SelectedIndex].Ticker;
+                addTimerWindow.SelectedTickerTextBox.Text = bot.Futures[InstrumentsListBox.SelectedIndex].Ticker;
             }
             this.Visibility = Visibility.Hidden;
         }
+
     }
 
 

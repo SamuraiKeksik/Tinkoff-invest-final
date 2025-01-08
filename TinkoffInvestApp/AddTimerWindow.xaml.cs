@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Tinkoff.InvestApi.V1;
 using TinkoffInvestLib;
 
 namespace TinkoffInvestApp
@@ -40,10 +41,16 @@ namespace TinkoffInvestApp
                     {
                         if (DateTime.Now.TimeOfDay.Hours == timer.ExecutionTime.Hours && DateTime.Now.TimeOfDay.Minutes == timer.ExecutionTime.Minutes)
                         {
-                            MessageBox.Show("ТАЙМЕР!!!" + timer.Ticker);
+                            Dispatcher.Invoke(new Action(() =>
+                            {
+                                int.TryParse(FirstStrategyValueTextBox.Text, out int firstParam);
+                                int.TryParse(SecondStrategyValueTextBox.Text, out int secondParam);
+
+                                Trade(timer, firstParam, secondParam);
+                            }));
                         }
                     }
-                    Thread.Sleep(60000); //60 секунд простоя
+                    Thread.Sleep(10000); //60 секунд простоя
                 }
                 
                 
@@ -63,6 +70,8 @@ namespace TinkoffInvestApp
                 ExecutionTime = TimerTimePicker.Value.Value.TimeOfDay,
                 SendToTelegram = false,
                 Strategy = (AvailableStrategiesEnum)SelectedStrategyComboBox.SelectedIndex,
+                CandleInterval = Tinkoff.InvestApi.V1.CandleInterval._4Hour, // Доделать
+                LotsQuantity = 1,  // Доделать
             });
         }
 
@@ -70,6 +79,28 @@ namespace TinkoffInvestApp
         {
             mainWindow.Visibility = Visibility.Visible;
             this.Visibility = Visibility.Collapsed;
+        }
+
+        private async void Trade(Timer timer, int firstParameter, int secondParameter)
+        {
+            var candles = await mainWindow.bot.GetCandlesListAsync(timer.Ticker, timer.CandleInterval);
+            if(TinkoffInvestBot.ModifiedCalculateHeikinAshi(candles, firstParameter, secondParameter))
+            {
+                await Tinkoff_telegramm.MyTelegramBot.SendJaroslavMessage($"КУПИТЬ {timer.Ticker}");
+                await Tinkoff_telegramm.MyTelegramBot.SendMeMessage($"КУПИТЬ {timer.Ticker}");
+                await mainWindow.bot.PlaceOrderAsync(mainWindow.SelectedAccount, timer.Ticker, timer.LotsQuantity, OrderDirection.Buy);
+            }
+            else
+            {
+                await Tinkoff_telegramm.MyTelegramBot.SendJaroslavMessage($"Продать {timer.Ticker}");
+                await Tinkoff_telegramm.MyTelegramBot.SendMeMessage($"Продать {timer.Ticker}");
+                await mainWindow.bot.PlaceOrderAsync(mainWindow.SelectedAccount, timer.Ticker, timer.LotsQuantity, OrderDirection.Sell);
+            }
+        }
+
+        private void DeleteTimerButton_Click(object sender, RoutedEventArgs e)
+        {
+            timers.Remove(timers[TimersListBox.SelectedIndex]);
         }
     }
 }

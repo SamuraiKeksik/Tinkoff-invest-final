@@ -27,5 +27,6 @@
         <Label Content="Выбранная стратегия" HorizontalAlignment="Left" Margin="288,217,0,0" VerticalAlignment="Top" RenderTransformOrigin="0,0.194"/>
         <TextBox x:Name="FirstStrategyValueTextBox" HorizontalAlignment="Left" Margin="430,225,0,0" TextWrapping="Wrap" Text="Первый параметр" VerticalAlignment="Top" Width="120"/>
         <TextBox x:Name="SecondStrategyValueTextBox" HorizontalAlignment="Left" Margin="570,225,0,0" TextWrapping="Wrap" Text="Второй параметр" VerticalAlignment="Top" Width="120"/>
+        <Button x:Name="DeleteTimerButton" Content="Удалить таймер" HorizontalAlignment="Left" Margin="165,384,0,0" VerticalAlignment="Top" Click="DeleteTimerButton_Click"/>
     </Grid>
 </Window>

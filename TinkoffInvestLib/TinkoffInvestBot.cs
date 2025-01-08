@@ -66,7 +66,7 @@ namespace TinkoffInvestLib
         {
             var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
             var response = await Client.Instruments.SharesAsync(request);
-            Shares = response.Instruments.ToList();
+            Shares = response.Instruments.OrderBy(i => i.Ticker).ToList();
             return Shares;
         }
 
@@ -78,7 +78,7 @@ namespace TinkoffInvestLib
         {
             var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
             var response = await Client.Instruments.FuturesAsync(request);
-            Futures = response.Instruments.ToList();
+            Futures = response.Instruments.OrderBy(i => i.Ticker).ToList();
             return Futures;
         }
         /// <summary>
@@ -89,7 +89,7 @@ namespace TinkoffInvestLib
         {
             var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
             var response = await Client.Instruments.EtfsAsync(request);
-            Funds = response.Instruments.ToList();
+            Funds = response.Instruments.OrderBy(i => i.Ticker).ToList();
             return Funds;
         }
 
@@ -505,9 +505,9 @@ namespace TinkoffInvestLib
             List<decimal> haLow = new List<decimal>();
             for (int i = 0; i < length; i++)
             {
-                haClose.Add((o + h + l + c) / 4);
+                haClose.Add((o + h + l + c + c) / 5);
                 if (haOpen.Count < 1) haOpen.Add((o + c + o) / 3);
-                else haOpen.Add((haOpen[i - 1] + haClose[i]) / 2);
+                else haOpen.Add((haOpen[i - 1] + haClose[i] + o) / 3);
 
                 haHigh.Add(decimal.Max(h, decimal.Max(haOpen[i], haClose[i])));
                 haLow.Add(decimal.Min(l, decimal.Min(haOpen[i], haClose[i])));

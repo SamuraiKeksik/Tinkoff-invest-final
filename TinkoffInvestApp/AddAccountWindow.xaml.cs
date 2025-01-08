@@ -87,7 +87,11 @@ namespace TinkoffInvestApp
                 WalletTextBlock.Text = $"0 Р.";
             foreach (var item in portfolio)
             {
-                PortfolioTextBlock.Text += $"{item.InstrumentUid} - {item.Quantity}" + "\n";
+                var ticker = mainWindow.bot.Shares.Any(s => s.Uid == item.InstrumentUid) == true 
+                    ? mainWindow.bot.Shares.First(s => s.Uid == item.InstrumentUid).Ticker 
+                    : mainWindow.bot.Futures.First(s => s.Uid == item.InstrumentUid).Ticker;
+
+                PortfolioTextBlock.Text += $"{ticker} - {item.Quantity.Units}.{item.Quantity.Nano}" + "\n";
             }
             
         }
