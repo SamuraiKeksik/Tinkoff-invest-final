@@ -23,6 +23,7 @@ namespace TinkoffInvestApp
     public partial class AddTimerWindow : Window
     {
         ObservableCollection<Timer> timers = new ObservableCollection<Timer>();
+        ObservableCollection<string> selectedTickersList = new ObservableCollection<string>();
         MainWindow mainWindow;
 
         public AddTimerWindow()
@@ -32,6 +33,8 @@ namespace TinkoffInvestApp
             SelectedStrategyComboBox.ItemsSource = Enum.GetValues(typeof(AvailableStrategiesEnum)).Cast<AvailableStrategiesEnum>(); 
             SelectedStrategyComboBox.SelectedIndex = 0;
             TimersListBox.ItemsSource = timers;
+            TickersListBox.ItemsSource = mainWindow.bot.Shares;
+            SelectedTickersListBox.ItemsSource = selectedTickersList;
 
             Task.Run(() =>
             {
@@ -50,7 +53,7 @@ namespace TinkoffInvestApp
                             }));
                         }
                     }
-                    Thread.Sleep(10000); //60 секунд простоя
+                    Thread.Sleep(60000); //60 секунд простоя
                 }
                 
                 
@@ -64,15 +67,26 @@ namespace TinkoffInvestApp
 
         private void AddTimerButton_Click(object sender, RoutedEventArgs e)
         {
-            timers.Add(new Timer
+            if (selectedTickersList.Count == 0) return;
+            if (timers.Any(t => t.ExecutionTime == TimerTimePicker.Value.Value.TimeOfDay))  
             {
-                Ticker = SelectedTickerTextBox.Text,
-                ExecutionTime = TimerTimePicker.Value.Value.TimeOfDay,
-                SendToTelegram = false,
-                Strategy = (AvailableStrategiesEnum)SelectedStrategyComboBox.SelectedIndex,
-                CandleInterval = Tinkoff.InvestApi.V1.CandleInterval._4Hour, // Доделать
-                LotsQuantity = 1,  // Доделать
-            });
+                timers.First(t => t.ExecutionTime == TimerTimePicker.Value.Value.TimeOfDay).TickersList.AddRange(selectedTickersList.ToList());
+                TimersListBox.Items.Refresh();
+            }
+            else
+            {
+                timers.Add(new Timer
+                {
+                    TickersList = selectedTickersList.ToList(),
+                    ExecutionTime = TimerTimePicker.Value.Value.TimeOfDay,
+                    SendToTelegram = false,
+                    Strategy = (AvailableStrategiesEnum)SelectedStrategyComboBox.SelectedIndex,
+                    CandleInterval = Tinkoff.InvestApi.V1.CandleInterval._4Hour, // Доделать
+                    LotsQuantity = 1,  // Доделать
+                });
+            }
+
+            selectedTickersList.Clear();
         }
 
         private void GoBackButton_Click(object sender, RoutedEventArgs e)
@@ -83,24 +97,77 @@ namespace TinkoffInvestApp
 
         private async void Trade(Timer timer, int firstParameter, int secondParameter)
         {
-            var candles = await mainWindow.bot.GetCandlesListAsync(timer.Ticker, timer.CandleInterval);
-            if(TinkoffInvestBot.ModifiedCalculateHeikinAshi(candles, firstParameter, secondParameter))
+            foreach (var ticker in timer.TickersList)
             {
-                await Tinkoff_telegramm.MyTelegramBot.SendJaroslavMessage($"КУПИТЬ {timer.Ticker}");
-                await Tinkoff_telegramm.MyTelegramBot.SendMeMessage($"КУПИТЬ {timer.Ticker}");
-                await mainWindow.bot.PlaceOrderAsync(mainWindow.SelectedAccount, timer.Ticker, timer.LotsQuantity, OrderDirection.Buy);
+                var candles = await mainWindow.bot.GetCandlesListAsync(ticker, timer.CandleInterval);
+                if (TinkoffInvestBot.ModifiedCalculateHeikinAshi(candles, firstParameter, secondParameter))
+                {
+                    await Tinkoff_telegramm.MyTelegramBot.SendJaroslavMessage($"КУПИТЬ {ticker}");
+                    await Tinkoff_telegramm.MyTelegramBot.SendMeMessage($"КУПИТЬ {ticker}");
+                    await mainWindow.bot.PlaceOrderAsync(mainWindow.SelectedAccount, ticker, timer.LotsQuantity, OrderDirection.Buy);
+                }
+                else
+                {
+                    await Tinkoff_telegramm.MyTelegramBot.SendJaroslavMessage($"Продать {ticker}");
+                    await Tinkoff_telegramm.MyTelegramBot.SendMeMessage($"Продать {ticker}");
+                    await mainWindow.bot.PlaceOrderAsync(mainWindow.SelectedAccount, ticker, timer.LotsQuantity, OrderDirection.Sell);
+                }
             }
-            else
-            {
-                await Tinkoff_telegramm.MyTelegramBot.SendJaroslavMessage($"Продать {timer.Ticker}");
-                await Tinkoff_telegramm.MyTelegramBot.SendMeMessage($"Продать {timer.Ticker}");
-                await mainWindow.bot.PlaceOrderAsync(mainWindow.SelectedAccount, timer.Ticker, timer.LotsQuantity, OrderDirection.Sell);
-            }
+            
         }
 
         private void DeleteTimerButton_Click(object sender, RoutedEventArgs e)
         {
             timers.Remove(timers[TimersListBox.SelectedIndex]);
+        }
+
+        private void SelectTickersButton_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var item in TickersListBox.SelectedItems)
+            {
+                var share = item as Share;
+                var future = item as Future;
+                var fund = item as Etf;
+                if (share != null && mainWindow.bot.Shares.Any(t => t.Ticker == share.Ticker))
+                {
+                    if (selectedTickersList.Any(t => t == share.Ticker))
+                        selectedTickersList.Remove(share.Ticker);
+                    else
+                        selectedTickersList.Add(share.Ticker);
+                }
+                else if (future != null && mainWindow.bot.Futures.Any(t => t.Ticker == future.Ticker))
+                {
+                    if (selectedTickersList.Any(t => t == future.Ticker))
+                        selectedTickersList.Remove(future.Ticker);
+                    else
+                        selectedTickersList.Add(future.Ticker);
+                }
+                else if (fund != null && mainWindow.bot.Funds.Any(t => t.Ticker == fund.Ticker))
+                {
+                    if (selectedTickersList.Any(t => t == fund.Ticker))
+                        selectedTickersList.Remove(fund.Ticker);
+                    else
+                        selectedTickersList.Add(fund.Ticker);
+                }
+            }            
+
+            TickersListBox.SelectedItems.Clear();
+            
+        }
+
+        private void SharesButton_Click(object sender, RoutedEventArgs e)
+        {
+            TickersListBox.ItemsSource = mainWindow.bot.Shares;
+        }
+
+        private void FuturesButton_Click(object sender, RoutedEventArgs e)
+        {
+            TickersListBox.ItemsSource = mainWindow.bot.Futures;
+        }
+
+        private void FundsButton_Click(object sender, RoutedEventArgs e)
+        {
+            TickersListBox.ItemsSource = mainWindow.bot.Funds;
         }
     }
 }

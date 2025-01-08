@@ -10,7 +10,7 @@ namespace TinkoffInvestApp
 {
     public class Timer
     {
-        public string Ticker { get; set; }
+        public List<string> TickersList { get; set; }
         public TimeSpan ExecutionTime { get; set; }
         public bool SendToTelegram { get; set; }
         public TinkoffInvestLib.AvailableStrategiesEnum Strategy { get; set; }

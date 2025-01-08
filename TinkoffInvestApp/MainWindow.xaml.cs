@@ -89,14 +89,6 @@ namespace TinkoffInvestApp
         private void TimersButton_Click(object sender, RoutedEventArgs e)
         {
             addTimerWindow.Show();
-            if (selectedInstrumentIsShare)
-            {
-                addTimerWindow.SelectedTickerTextBox.Text = bot.Funds[InstrumentsListBox.SelectedIndex].Ticker;
-            }
-            else
-            {
-                addTimerWindow.SelectedTickerTextBox.Text = bot.Futures[InstrumentsListBox.SelectedIndex].Ticker;
-            }
             this.Visibility = Visibility.Hidden;
         }
 

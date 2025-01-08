@@ -8,25 +8,46 @@
         mc:Ignorable="d"
         Title="AddTimerWindow" Height="450" Width="800" Closing="Window_Closing">
     <Grid>
-        <ListBox x:Name="TimersListBox"  Margin="40,44,580,75">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0*"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <ListBox x:Name="TimersListBox"  Margin="10,40,610,79" Grid.RowSpan="2">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel>
-                        <TextBlock Text = "{Binding Ticker}"></TextBlock>
+                        <ListBox ItemsSource   = "{Binding TickersList}"></ListBox>
                         <TextBlock Text = "{Binding ExecutionTime}"></TextBlock>
                         <TextBlock Text = "{Binding Strategy}"></TextBlock>
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <TextBox x:Name="SelectedTickerTextBox" HorizontalAlignment="Left" Margin="280,44,0,0" TextWrapping="Wrap" Text="Выбранный инструмент" VerticalAlignment="Top" Width="120"/>
-        <customName:TimePicker x:Name="TimerTimePicker" HorizontalAlignment="Left" Width="104" Margin="288,109,0,275"/>
-        <Button x:Name="AddTimerButton" Content="Добавить" HorizontalAlignment="Left" Margin="430,134,0,0" VerticalAlignment="Top" Click="AddTimerButton_Click"/>
-        <Button x:Name="GoBackButton" Content="Назад" HorizontalAlignment="Left" Margin="40,10,0,0" VerticalAlignment="Top" Click="GoBackButton_Click"/>
-        <ComboBox x:Name="SelectedStrategyComboBox" HorizontalAlignment="Left" Margin="288,249,0,0" VerticalAlignment="Top" Width="120"/>
-        <Label Content="Выбранная стратегия" HorizontalAlignment="Left" Margin="288,217,0,0" VerticalAlignment="Top" RenderTransformOrigin="0,0.194"/>
-        <TextBox x:Name="FirstStrategyValueTextBox" HorizontalAlignment="Left" Margin="430,225,0,0" TextWrapping="Wrap" Text="Первый параметр" VerticalAlignment="Top" Width="120"/>
-        <TextBox x:Name="SecondStrategyValueTextBox" HorizontalAlignment="Left" Margin="570,225,0,0" TextWrapping="Wrap" Text="Второй параметр" VerticalAlignment="Top" Width="120"/>
-        <Button x:Name="DeleteTimerButton" Content="Удалить таймер" HorizontalAlignment="Left" Margin="165,384,0,0" VerticalAlignment="Top" Click="DeleteTimerButton_Click"/>
+        <ListBox x:Name="TickersListBox" HorizontalAlignment="Left" Margin="217,40,0,0" VerticalAlignment="Top" Width="262" SelectionMode="Multiple" Height="258" Grid.RowSpan="2">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <TextBlock Text = "{Binding Ticker}"></TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <ListBox x:Name="SelectedTickersListBox" HorizontalAlignment="Left" Margin="499,40,0,0" VerticalAlignment="Top" Width="131" Height="258" Grid.RowSpan="2">
+        </ListBox>
+        <customName:TimePicker Value="10:00" x:Name="TimerTimePicker" HorizontalAlignment="Left" Width="104" Margin="671,79,0,305" Grid.RowSpan="2"/>
+        <Button x:Name="AddTimerButton" Content="Добавить таймер" HorizontalAlignment="Left" Margin="673,149,0,0" VerticalAlignment="Top" Click="AddTimerButton_Click" Grid.RowSpan="2"/>
+        <Button x:Name="GoBackButton" Content="Назад" HorizontalAlignment="Left" Margin="40,10,0,0" VerticalAlignment="Top" Click="GoBackButton_Click" Grid.RowSpan="2"/>
+        <Button x:Name="SharesButton" Content="Акции" HorizontalAlignment="Left" Margin="217,20,0,0" VerticalAlignment="Top" Grid.RowSpan="2" Click="SharesButton_Click"/>
+        <Button x:Name="FuturesButton" Content="Фьючерсы" HorizontalAlignment="Left" Margin="256,20,0,0" VerticalAlignment="Top" Grid.RowSpan="2" RenderTransformOrigin="0.303,0.453" Click="FuturesButton_Click"/>
+        <Button x:Name="FundsButton" Content="Фонды" HorizontalAlignment="Left" Margin="319,20,0,0" VerticalAlignment="Top" Grid.RowSpan="2" Click="FundsButton_Click"/>
+        <ComboBox x:Name="SelectedStrategyComboBox" HorizontalAlignment="Left" Margin="265,373,0,0" VerticalAlignment="Top" Width="120" Height="24" Grid.RowSpan="2"/>
+        <Label Content="Выбранная стратегия" HorizontalAlignment="Left" Margin="265,338,0,0" VerticalAlignment="Top" RenderTransformOrigin="0,0.194" Height="29" Grid.RowSpan="2"/>
+        <Label Content="Первый параметр" HorizontalAlignment="Left" Margin="405,338,0,0" VerticalAlignment="Top" RenderTransformOrigin="0,0.194" Height="29" Grid.RowSpan="2"/>
+        <Label Content="Второй параметр" HorizontalAlignment="Left" Margin="545,338,0,0" VerticalAlignment="Top" RenderTransformOrigin="0,0.194" Height="29" Grid.RowSpan="2"/>
+        <Label Content="Выбранные тикеры" HorizontalAlignment="Left" Margin="506,5,0,0" VerticalAlignment="Top" RenderTransformOrigin="0,0.194" Height="29" Grid.RowSpan="2"/>
+        <TextBox x:Name="FirstStrategyValueTextBox" HorizontalAlignment="Left" Margin="400,375,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="120" Height="20" Grid.RowSpan="2"/>
+        <TextBox x:Name="SecondStrategyValueTextBox" HorizontalAlignment="Left" Margin="538,373,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="120" Height="20" Grid.RowSpan="2"/>
+        <Button x:Name="DeleteTimerButton" Content="Удалить таймер" HorizontalAlignment="Left" Margin="55,379,0,0" VerticalAlignment="Top" Click="DeleteTimerButton_Click" Grid.RowSpan="2"/>
+        <Button x:Name="SelectTickersButton" Content="Выбрать Тикеры" HorizontalAlignment="Left" Margin="384,10,0,0" Grid.RowSpan="2" VerticalAlignment="Top" Click="SelectTickersButton_Click"/>
     </Grid>
 </Window>
