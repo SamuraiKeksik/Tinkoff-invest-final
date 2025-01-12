@@ -34,10 +34,10 @@ namespace TinkoffInvestApp
         {
             InitializeComponent();
             StartWindow();
-            AccountsListBox.ItemsSource = mainWindow.bot.Accounts;
+            AccountsListBox.ItemsSource = mainWindow.AccountsCollection;
 
             SelectedAccount = mainWindow.SelectedAccount;
-            SelectedAccountComboBox.ItemsSource = mainWindow.bot.Accounts;
+            SelectedAccountComboBox.ItemsSource = mainWindow.AccountsCollection;
             SelectedAccountComboBox.SelectedItem = mainWindow.SelectedAccount != null ? mainWindow.SelectedAccount : null;
 
             var task = Task.Run(() =>
@@ -55,7 +55,6 @@ namespace TinkoffInvestApp
         private async void StartWindow()
         {
             mainWindow = (MainWindow)Application.Current.MainWindow;
-            await mainWindow.bot.UpdateAccountsAsync();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -71,8 +70,10 @@ namespace TinkoffInvestApp
             this.Visibility = Visibility.Hidden;
         }                   
 
-        private async void AccountsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void AccountsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e) //Вывод инфы о портфеле счета
         {
+            if (AccountsListBox.SelectedIndex == -1) return;
+
             PortfolioTextBlock.Text = "";
             CurrentAccount = mainWindow.bot.Accounts[AccountsListBox.SelectedIndex];
             var portfolio = await mainWindow.bot.GetPortfolioInstrumentsAsync(CurrentAccount);
@@ -109,7 +110,8 @@ namespace TinkoffInvestApp
                     await ((TinkoffInvestSandboxBot)mainWindow.bot).PayInSandboxAccountAsync(mainWindow.bot.Accounts.First(a => a.Name == NewAccountNameTextBox.Text), money);
                 }
 
-                await mainWindow.bot.UpdateAccountsAsync();
+                RefreshAccountList();
+
             }
         }
 
@@ -122,12 +124,21 @@ namespace TinkoffInvestApp
         private async void DeleteAccountButton_Click(object sender, RoutedEventArgs e)
         {
             await ((TinkoffInvestSandboxBot)mainWindow.bot).DeleteSandboxAccountAsync(CurrentAccount);
-            await mainWindow.bot.UpdateAccountsAsync();
+            RefreshAccountList();
         }
         
         private void SelectedAccountComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (SelectedAccountComboBox.SelectedIndex == -1) return;
             SelectedAccount = mainWindow.bot.Accounts[SelectedAccountComboBox.SelectedIndex];
+        }
+
+        private async void RefreshAccountList()
+        {
+            await mainWindow.bot.UpdateAccountsAsync();
+            mainWindow.AccountsCollection = new ObservableCollection<Account>(mainWindow.bot.Accounts);
+            AccountsListBox.ItemsSource = mainWindow.AccountsCollection;
+            SelectedAccountComboBox.ItemsSource = mainWindow.AccountsCollection;
         }
     }
 }

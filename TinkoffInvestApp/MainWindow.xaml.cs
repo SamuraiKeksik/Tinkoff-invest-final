@@ -25,9 +25,11 @@ namespace TinkoffInvestApp
         AddAccountWindow addAccountWindow { get; set; }
         AddTimerWindow addTimerWindow { get; set; }
 
+
         public bool isSandbox;
         public bool selectedInstrumentIsShare;
         public Account SelectedAccount { get; set; }
+        public ObservableCollection<Account> AccountsCollection { get; set; }
 
         public MainWindow()
         {
@@ -42,7 +44,10 @@ namespace TinkoffInvestApp
         {            
             this.Visibility = Visibility.Visible;
             SharesButton_Click(this, new RoutedEventArgs());
-
+            await bot.UpdateAccountsAsync();
+            AccountsCollection = new ObservableCollection<Account>(bot.Accounts);
+            SelectedAccount = AccountsCollection.Count > 0 ? AccountsCollection[0] : null;
+            AccountNameTextBlock.Text = SelectedAccount?.Name ?? "Пусто";
 
             /* if (isSandbox == true)
                  StartSandbox();*/
