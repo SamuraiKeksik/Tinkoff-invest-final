@@ -1,4 +1,6 @@
 ﻿using Google.Api;
+using Serilog;
+using Serilog.Events;
 using System.Windows;
 using Tinkoff.InvestApi;
 using TinkoffInvestLib;
@@ -47,12 +49,18 @@ namespace TinkoffInvestApp
             string token = TokenTextBox.Text;                   //Берем токен из текстБокса
             var client = InvestApiClientFactory.Create(token, isSandbox);   //Создаем клиента тьнькофф API
 
+
+            var logger = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .WriteTo.File("logs/info.log", LogEventLevel.Information)
+            .WriteTo.File("logs/error.log", LogEventLevel.Error)
+            .CreateLogger();
             if (isSandbox)  //Если токен для песочницы то выполняем простой запрос в песочнице для проверки его работоспособности
             {
                 try
                 {
                     await client.Sandbox.GetSandboxAccountsAsync(new Tinkoff.InvestApi.V1.GetAccountsRequest());
-                    mainWindow.bot = await TinkoffInvestSandboxBot.CreateTinkoffInvestBotAsync(token);
+                    mainWindow.bot = await TinkoffInvestSandboxBot.CreateTinkoffInvestBotAsync(token, logger);
                 }
                 catch (Grpc.Core.RpcException exception)
                 {
@@ -67,7 +75,7 @@ namespace TinkoffInvestApp
                 try
                 {
                     await client.Users.GetAccountsAsync(new Tinkoff.InvestApi.V1.GetAccountsRequest());
-                    mainWindow.bot = await TinkoffInvestBot.CreateTinkoffInvestBotAsync(token);
+                    mainWindow.bot = await TinkoffInvestBot.CreateTinkoffInvestBotAsync(token, logger);
                 }
                 catch (Grpc.Core.RpcException exception)
                 {

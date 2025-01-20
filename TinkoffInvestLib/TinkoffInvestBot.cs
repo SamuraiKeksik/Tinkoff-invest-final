@@ -1,12 +1,19 @@
 ﻿using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Core;
+using System;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using Tinkoff.InvestApi;
 using Tinkoff.InvestApi.V1;
 using static Google.Protobuf.Compiler.CodeGeneratorResponse.Types;
+using static Google.Rpc.Context.AttributeContext.Types;
 using static Tinkoff.InvestApi.V1.OrderStateStreamResponse.Types;
 
 namespace TinkoffInvestLib
@@ -23,8 +30,6 @@ namespace TinkoffInvestLib
         public List<Etf> Funds { get; protected set; } = new List<Etf>();
         /// <summary>Содержит список счетов в песочнице</summary>        
         public List<Account> Accounts { get; protected set; } = new List<Account>();
-        protected virtual string BotLogsFilePath { get; set; } = "BotLogs.txt";
-        protected virtual string BotErrorsFilePath { get; set; } = "BotErrors.txt";
 
         protected TinkoffInvestBot(string token, bool isSandbox)
         {
@@ -36,9 +41,10 @@ namespace TinkoffInvestLib
         /// Метод создает экземпляр объекта, обновляет список счетов, акций и фьючерсов, после чего возвращает его
         /// </summary>
         /// <returns>Экземпляр бота TinkoffInvestSandboxBot</returns>
-        public static async Task<TinkoffInvestBot> CreateTinkoffInvestBotAsync(string token) //Создает объект бота и выполняет асинхронный метод
-        {            
+        public static async Task<TinkoffInvestBot> CreateTinkoffInvestBotAsync(string token, Serilog.ILogger logger) //Создает объект бота и выполняет асинхронный метод
+        {
             var bot = new TinkoffInvestBot(token, false);
+            Log.Logger = logger;
             bot.Accounts = await bot.UpdateAccountsAsync();
             bot.Shares = await bot.GetSharesAsync();
             bot.Futures = await bot.GetFuturesAsync();
@@ -52,9 +58,13 @@ namespace TinkoffInvestLib
         /// <returns>Список аккаунтов</returns>
         public virtual async Task<List<Account>> UpdateAccountsAsync()     
         {
+            Log.Information("Вызов UpdateAccountsAsync()");
+
             var request = new GetAccountsRequest();
             var response = await Client.Users.GetAccountsAsync(request);
             Accounts = response.Accounts.ToList();
+
+            Log.Information("Получил список счетов: {list}", Accounts);
             return Accounts;
         }
 
@@ -62,11 +72,15 @@ namespace TinkoffInvestLib
         /// Метод возвращает список акций доступных для торговли на бирже
         /// </summary>
         /// <returns>Список акций</returns>
-        protected async Task<List<Share>> GetSharesAsync()   
+        protected async Task<List<Share>> GetSharesAsync()
         {
+            Log.Information("Вызов GetSharesAsync()");
+
             var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
             var response = await Client.Instruments.SharesAsync(request);
             Shares = response.Instruments.OrderBy(i => i.Ticker).ToList();
+
+            Log.Information("Получил список акций: {0} штук", Shares.Count);
             return Shares;
         }
 
@@ -74,11 +88,15 @@ namespace TinkoffInvestLib
         /// Метод возвращает список фьючерсов доступных для торговли на бирже
         /// </summary>
         /// <returns>Список фьючерсов</returns>
-        protected async Task<List<Future>> GetFuturesAsync()   
+        protected async Task<List<Future>> GetFuturesAsync()
         {
+            Log.Information("Вызов GetFuturesAsync()"); ;
+
             var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
             var response = await Client.Instruments.FuturesAsync(request);
             Futures = response.Instruments.OrderBy(i => i.Ticker).ToList();
+
+            Log.Information("Получил список фьючерсов: {0} штук", Futures.Count);
             return Futures;
         }
         /// <summary>
@@ -87,14 +105,19 @@ namespace TinkoffInvestLib
         /// <returns>Список фьючерсов</returns>
         protected async Task<List<Etf>> GetFundsAsync()   
         {
+            Log.Information("Вызов GetFundsAsync()");
+
             var request = new InstrumentsRequest { InstrumentStatus = InstrumentStatus.Base };
             var response = await Client.Instruments.EtfsAsync(request);
             Funds = response.Instruments.OrderBy(i => i.Ticker).ToList();
+
+            Log.Information("Получил список фондов: {0}", Funds.Count);
             return Funds;
         }
 
         public async void UpdateInstrumentsLists()
         {
+            Log.Information("Вызов UpdateInstrumentsLists()");
             await GetSharesAsync();
             await GetFuturesAsync();
             await GetFundsAsync();
@@ -107,6 +130,7 @@ namespace TinkoffInvestLib
         /// <returns>Строка с информацией о счете</returns>
         public async virtual Task<string> GetAccountInfoAsync(Account account)
         {
+            Log.Information("Вызов GetAccountInfoAsync()");
             if (account == null) { return "Переданного счета не существует!"; } 
             string result = $"Информация по счету {account.Name} на {DateTime.Now}:\n";    //Создание строки ответа
 
@@ -119,6 +143,7 @@ namespace TinkoffInvestLib
             result += GetPortfolioInfoAsync(portfolioResponse.Positions.ToList());
             result += "\tОбщая стоимость портфеля: " + portfolioResponse.TotalAmountPortfolio + "\n";
 
+            Log.Information("Получил информацию о счете: {0}", result);
             return result ;
         }
 
@@ -129,10 +154,12 @@ namespace TinkoffInvestLib
         /// <returns>Сумма доступного возврата</returns>
         public virtual async Task<decimal> GetWithdrawLimitAsync(Account account)
         {
+            Log.Information("Вызов GetWithdrawLimitAsync()");
             if (account == null) { return 0; } 
             var request = new WithdrawLimitsRequest { AccountId = account.Id };
             var response = await Client.Operations.GetWithdrawLimitsAsync(request);
 
+            Log.Information("Получил остаток для вывода средств: {0}", response.Money.First().ToDecimal());
             return response.Money.First().ToDecimal();
         }
 
@@ -143,7 +170,13 @@ namespace TinkoffInvestLib
         /// <returns>true если получилось, false в случае неудачи</returns>
         public async Task<bool> SellAllInstrumentsAsync(Account account)
         {
-            if (account == null) { return false; }
+            Log.Information("Вызов SellAllInstrumentsAsync()");
+
+            if (account == null) 
+            {
+                Log.Warning("не найден счет для продажи инструментов");
+                return false; 
+            }
             var instruments = await GetPortfolioInstrumentsAsync(account);
             foreach (var instrument in instruments)
             {
@@ -161,6 +194,8 @@ namespace TinkoffInvestLib
                 var orderDirection = quantity < 0 ? OrderDirection.Buy : OrderDirection.Sell;
                 await PlaceOrderAsync(account, ticker, quantity, orderDirection);
             }
+
+            Log.Information("Успешно выставлена заявка на продажу всех инструментов");
             return true;
         }
 
@@ -173,6 +208,7 @@ namespace TinkoffInvestLib
         /// <returns>Строка с информацией о торговых поручениях</returns>
         protected string GetOrdersInfoAsync(List<Tinkoff.InvestApi.V1.OrderState> ordersStates) //Возвращает информацию в виде строки о торговых поручениях
         {
+            Log.Information("Вызов GetOrdersInfoAsync()");
             string result = String.Empty;
             if (ordersStates.Count == 0) { result += "\tАктивные торговые поручения отсутствуют!\n"; }
             else
@@ -196,6 +232,8 @@ namespace TinkoffInvestLib
                 }
                 result += "\n";
             }
+
+            Log.Information("Получил информацию об активных поручениях: {0}", result);
             return result;
         }
 
@@ -206,6 +244,7 @@ namespace TinkoffInvestLib
         /// <returns>Строка с информацией о портфолио</returns>
         protected string GetPortfolioInfoAsync(List<PortfolioPosition> portfolioPositions) //Возвращает информацию в виде строки о портфеле
         {
+            Log.Information("Вызов GetPortfolioInfoAsync()");
             string result = string.Empty;
             if (portfolioPositions.Count == 0) { result += "\tПортфель пуст!\n"; }
             else
@@ -222,12 +261,18 @@ namespace TinkoffInvestLib
                         var future = Futures.First(s => s.Uid == position.InstrumentUid);
                         result += $"\t{future.Ticker} - фьючерс | {future.Name}, цена за 1 - {position.CurrentPrice}, количество - {position.Quantity}\n";
                     }
+                    else if (Funds.Any(s => s.Uid == position.InstrumentUid))     //Если торговое поручение относится к фондам 
+                    {                                                           //То добавляет к результату описание для фонда
+                        var fund = Funds.First(s => s.Uid == position.InstrumentUid);
+                        result += $"\t{fund.Ticker} - фонд | {fund.Name}, цена за 1 - {position.CurrentPrice}, количество - {position.Quantity}\n";
+                    }
                     else                                                        //Если торговое поручение неизвестно к чему относится 
                     {                                                           //То добавляет к результату обобщенное описание 
                         result += $"\t{position.PositionUid} - неизвестно | количество - {position.Quantity}, цена за 1 - {position.CurrentPrice}\n";
                     }
                 }
             }
+            Log.Information("Получил информацию о портфеле счета {0}", result);
             return result;
         }
 
@@ -238,9 +283,12 @@ namespace TinkoffInvestLib
         /// <returns>Список позиций портфеля</returns>
         public virtual async Task<List<PortfolioPosition>> GetPortfolioInstrumentsAsync(Account account)
         {
+            Log.Information("Вызов GetPortfolioInstrumentsAsync()");
             var portfolioRequest = new PortfolioRequest() { AccountId = account.Id };  //Обрабатывает портфель счета
             var portfolioResponse = await Client.Operations.GetPortfolioAsync(portfolioRequest);
-           return portfolioResponse.Positions.ToList();
+
+            Log.Information("Получил список позиций портфеля {0}", portfolioResponse.Positions.ToList());
+            return portfolioResponse.Positions.ToList();
         }
 
          /// <summary>
@@ -251,6 +299,8 @@ namespace TinkoffInvestLib
         /// <returns>Количество лотов инструмента в портфеле</returns>
         public async Task<int> GetLotsOfInstrumentAsync(Account account, string ticker)
         {
+            Log.Information("Вызов GetLotsOfInstrumentAsync()");
+
             string instrumentId;
             if (Shares.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
             {
@@ -260,16 +310,27 @@ namespace TinkoffInvestLib
             {
                 instrumentId = Futures.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
             }
-            else throw new Exception("Тикер не найден"!);
+            else if (Funds.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+            {
+                instrumentId = Funds.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+            }
+            else 
+            {
+                Log.Information("Не найден тикер {0}, return вернул 0");
+                return 0;
+            }
 
             var positions = await GetPortfolioInstrumentsAsync(account);
             foreach (var position in positions)
             {
                 if (position.InstrumentUid == instrumentId)
                 {
+                    Log.Information("Тикер {0} найден, кол-во лотов: {1}", ticker, position.QuantityLots.Units);
                     return Convert.ToInt32(position.QuantityLots.Units);
                 }
             }
+
+            Log.Warning("Не найден тикер {0} в портфеле, return вернул 0", ticker);
             return 0; //Если инструмент не найден в портфеле то возвращаем 0
         }
 
@@ -281,6 +342,7 @@ namespace TinkoffInvestLib
         /// <exception cref="Exception"></exception>
         public async Task<decimal> GetCurrentPriceOfInstrumentAsync(string ticker)
         {
+            Log.Information("Вызов GetCurrentPriceOfInstrumentAsync()");
             try
             {
                 string instrumentId;
@@ -292,18 +354,25 @@ namespace TinkoffInvestLib
                 {
                     instrumentId = Futures.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
                 }
-                else throw new Exception("Тикер не найден"!);
+                else if (Funds.Any(s => s.Ticker.ToLower() == ticker.ToLower()))
+                {
+                    instrumentId = Funds.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+                }
+                else 
+                {
+                    Log.Warning("Тикер {0} не найден, return вернул 0", ticker);
+                    return 0;
+                }
 
                 var request = new GetLastPricesRequest() { InstrumentId = { instrumentId } };
                 var response = await Client.MarketData.GetLastPricesAsync(request);
+
+                Log.Information("Тикер {0} найден, return вернул цену {1}", ticker, response.LastPrices.First().Price);
                 return response.LastPrices.First().Price;
             }
             catch (RpcException e)
             {
-                using (StreamWriter writer = new StreamWriter("BotErrors.txt", true))
-                {
-                    await writer.WriteLineAsync($"\tОшибка по тикеру {ticker} - " + e.ToString());
-                }
+                Log.Error("Ошибка по тикеру {0} - {1}, return вернул 0", ticker, e.ToString());
                 return 0;
             }
         }
@@ -318,6 +387,7 @@ namespace TinkoffInvestLib
         /// <returns>true в случае успешного выставления заявки, иначе false</returns>
         public virtual async Task<bool> PlaceOrderAsync(Account account, string ticker, int quantity, OrderDirection direction)
         {
+            Log.Information("Вызов PlaceOrderAsync()");
             try
             {
                 string instrumentId;
@@ -328,7 +398,11 @@ namespace TinkoffInvestLib
                     instrumentId = Futures.First(s => s.Ticker.ToUpper() == ticker.ToUpper()).Uid;
                 else if (Funds.Any(s => s.Ticker.ToUpper() == ticker.ToUpper()))
                     instrumentId = Futures.First(s => s.Ticker.ToUpper() == ticker.ToUpper()).Uid;
-                else return false;                  //Если введенный тикер не соответствует акциям, фьючерсам и фондами в списке, то возвращает false
+                else
+                {
+                    Log.Information("Тикер {0} не найден, return вернул: {1}", ticker, false);
+                    return false; //Если введенный тикер не соответствует акциям, фьючерсам и фондами в списке, то возвращает false
+                }                  
 
                 var request = new PostOrderRequest()
                 {
@@ -339,14 +413,13 @@ namespace TinkoffInvestLib
                     OrderType = OrderType.Bestprice
                 };
                 var response = await Client.Orders.PostOrderAsync(request);
+
+                Log.Information("Заявка на тикер {0} выставлена успешно. Направление: {1}, количество: {2}, тип:{3}", ticker, direction, quantity, OrderType.Bestprice);
                 return true;    //Если заявка выставлена успешно, то возвращает true
             }
             catch (RpcException e)
             {
-                using (StreamWriter writer = new StreamWriter(BotErrorsFilePath, true))
-                {
-                    await writer.WriteLineAsync($"\tОшибка по тикеру {ticker} - " + e.ToString());
-                }
+                Log.Error("Ошибка по тикеру {0} - {1}, return вернул 0", ticker, e.ToString());
                 return false;
             }
         }
@@ -359,6 +432,7 @@ namespace TinkoffInvestLib
         /// <returns>Список свечей или null если тикер инструмента неправильный</returns>
         public async Task<List<HistoricCandle>> GetCandlesListAsync(string ticker, CandleInterval interval) //Возвращает список свечей по figi с момента from по to
         {
+            Log.Information("Вызов GetCandlesListAsync()");
             DateTime from = interval switch
             {
                 CandleInterval.Unspecified => DateTime.UtcNow.AddDays(-1),
@@ -388,7 +462,15 @@ namespace TinkoffInvestLib
             {
                 instrumentId = Futures.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
             }
-            else { return null; }
+            else if (Funds.Any(f => f.Ticker.ToLower() == ticker.ToLower()))
+            {
+                instrumentId = Funds.First(s => s.Ticker.ToLower() == ticker.ToLower()).Uid;
+            }
+            else 
+            {
+                Log.Warning("Тикер {0} не найден return вернул null", ticker);
+                return null; 
+            }
 
             var request = new GetCandlesRequest()
             {
@@ -398,6 +480,8 @@ namespace TinkoffInvestLib
                 Interval = interval
             };
             var response = await Client.MarketData.GetCandlesAsync(request);
+
+            Log.Information("Тикер {0} найден, получил список свеч с {1} по {2} с интервалов {3}: {4}", ticker, from, to, interval, response.Candles.ToList());
             return response.Candles.ToList();
         }
 
@@ -409,6 +493,7 @@ namespace TinkoffInvestLib
         /// <returns></returns>
         public static decimal CalculateEma(List<decimal> prices, int length)
         {
+            Log.Information("Вызов CalculateEma() - список цен: {0}, длина: {1}", prices, length);
             int n = prices.Count > length ? length : prices.Count; //длина
             decimal k = (decimal)2 / (n + 1); //вес
             decimal ema = 0; //текущее ема
@@ -424,6 +509,8 @@ namespace TinkoffInvestLib
                 ema = (price * k) + (previousEma * (1 - k));
                 previousEma = ema;
             }
+
+            Log.Information("Вернул ema: {0}", ema);
             return ema;
         }
 
@@ -436,6 +523,7 @@ namespace TinkoffInvestLib
         /// <returns>true если купить и false если продать</returns>
         public static bool CalculateHeikinAshi(List<HistoricCandle> candles, int length, int length2)
         {
+            Log.Information("Вызов CalculateHeikinAshi() - список свеч: {0}, длина1: {1}, длина2: {2}", candles, length, length2);
             List<decimal> candlesOpenCosts = new List<decimal>();
             List<decimal> candlesCloseCosts = new List<decimal>();
             List<decimal> candlesHighCosts = new List<decimal>();
@@ -471,6 +559,8 @@ namespace TinkoffInvestLib
             var h2 = CalculateEma(haHigh, length2);
             var l2 = CalculateEma(haLow, length2);
 
+            Log.Information("o2 = {0}, c2 = {1}", o2, c2);
+            Log.Information("o2 > c2 = {0}", o2 > c2 ? "Правда" : "Ложь");
             return o2 > c2 ? false : true; // false - продать, true - купить
         }
 
@@ -483,6 +573,7 @@ namespace TinkoffInvestLib
         /// <returns>true если купить и false если продать</returns>
         public static bool ModifiedCalculateHeikinAshi(List<HistoricCandle> candles, int length, int length2)
         {
+            Log.Information("Вызов CalculateHeikinAshi() - список свеч: {0}, длина1: {1}, длина2: {2}", candles, length, length2);
             List<decimal> candlesOpenCosts = new List<decimal>();
             List<decimal> candlesCloseCosts = new List<decimal>();
             List<decimal> candlesHighCosts = new List<decimal>();
@@ -518,6 +609,8 @@ namespace TinkoffInvestLib
             var h2 = CalculateEma(haHigh, length2);
             var l2 = CalculateEma(haLow, length2);
 
+            Log.Information("o2 = {0}, c2 = {1}", o2, c2);
+            Log.Information("o2 > c2 = {0}", o2 > c2 ? "Правда" : "Ложь");
             return o2 < c2 ? false : true; // false - продать, true - купить
         }
 
@@ -529,10 +622,22 @@ namespace TinkoffInvestLib
         /// <returns>true если инструмент является фьючерсом, иначе false</returns>
         public bool? IsItFuture(string ticker)
         {
-            if (ticker == null) return null;
+            Log.Information("Вызов IsItFuture()");
+            if (ticker == null)
+            {
+                Log.Warning("Тикер = null");
+                return null;
+            }
             if (Futures.Any(f => f.Ticker.ToUpper() == ticker.ToUpper()))
+            {
+                Log.Information("Тикер {0} является фьючерсом, return вернул true", ticker);
                 return true;
-            else return false;
+            }
+            else
+            {
+                Log.Information("Тикер {0} не является фьючерсом, return вернул false", ticker);
+                return false;
+            }
         }
     }
 }
